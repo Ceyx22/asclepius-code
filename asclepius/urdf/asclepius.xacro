@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-<xacro:macro name="asclepius">
+<xacro:macro name="robot">
 
   <link name="world"/>
   <joint name="origin_to_joint1" type="fixed">
@@ -30,7 +30,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://asclepius/meshes/base_link.STL" />
+          filename="file://$(find asclepius)/meshes/base_link.STL" />
       </geometry>
       <material
         name="">
@@ -44,7 +44,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://asclepius/meshes/base_link.STL" />
+          filename="file://$(find asclepius)/meshes/base_link.STL" />
       </geometry>
     </collision>
   </link>
@@ -70,7 +70,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://asclepius/meshes/link1.STL" />
+          filename="file://$(find asclepius)/meshes/link1.STL" />
       </geometry>
       <material
         name="">
@@ -84,7 +84,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://asclepius/meshes/link1.STL" />
+          filename="file://$(find asclepius)/meshes/link1.STL" />
       </geometry>
     </collision>
   </link>
@@ -123,7 +123,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://asclepius/meshes/link2.STL" />
+          filename="file://$(find asclepius)/meshes/link2.STL" />
       </geometry>
       <material
         name="">
@@ -137,7 +137,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://asclepius/meshes/link2.STL" />
+          filename="file://$(find asclepius)/meshes/link2.STL" />
       </geometry>
     </collision>
   </link>
@@ -176,7 +176,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://asclepius/meshes/link3.STL" />
+          filename="file://$(find asclepius)/meshes/link3.STL" />
       </geometry>
       <material
         name="">
@@ -190,7 +190,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://asclepius/meshes/link3.STL" />
+          filename="file://$(find asclepius)/meshes/link3.STL" />
       </geometry>
     </collision>
   </link>
@@ -229,7 +229,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://asclepius/meshes/link4.STL" />
+          filename="file://$(find asclepius)/meshes/link4.STL" />
       </geometry>
       <material
         name="">
@@ -243,7 +243,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://asclepius/meshes/link4.STL" />
+          filename="file://$(find asclepius)/meshes/link4.STL" />
       </geometry>
     </collision>
   </link>
@@ -282,7 +282,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://asclepius/meshes/link5.STL" />
+          filename="file://$(find asclepius)/meshes/link5.STL" />
       </geometry>
       <material
         name="">
@@ -296,7 +296,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://asclepius/meshes/link5.STL" />
+          filename="file://$(find asclepius)/meshes/link5.STL" />
       </geometry>
     </collision>
   </link>
@@ -335,7 +335,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://asclepius/meshes/link6.STL" />
+          filename="file://$(find asclepius)/meshes/link6.STL" />
       </geometry>
       <material
         name="">
@@ -349,7 +349,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://asclepius/meshes/link6.STL" />
+          filename="file://$(find asclepius)/meshes/link6.STL" />
       </geometry>
     </collision>
   </link>
@@ -388,7 +388,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://asclepius/meshes/link7.STL" />
+          filename="file://$(find asclepius)/meshes/link7.STL" />
       </geometry>
       <material
         name="">
@@ -402,7 +402,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://asclepius/meshes/link7.STL" />
+          filename="file://$(find asclepius)/meshes/link7.STL" />
       </geometry>
     </collision>
   </link>

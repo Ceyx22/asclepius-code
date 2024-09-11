@@ -1,12 +1,10 @@
 <?xml version="1.0"?>
 <robot name="asclepius" xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:include filename="$(find asclepius)/urdf/asclepius.xacro" />
-  <!-- <xacro:include filename="$(find dynamixel_arm)/urdf/acps_bot.ros2_control_gazebo.xacro" /> -->
-
-  <!-- <link name="world"/> -->
-
-  <xacro:asclepius/>
+  <xacro:include filename="$(find asclepius)/urdf/ros2_control_gazebo.xacro" />
 
 
-  <!-- <xacro:acps_bot_ros2_control_gazebo name="acps_bot_ros2_control_gazebo" /> -->
+  <xacro:robot/>
+  <xacro:GZSystem/>
+
 </robot>

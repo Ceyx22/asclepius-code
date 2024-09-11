@@ -17,6 +17,7 @@ find_package(rviz2 REQUIRED)
 
 # Install things for simulation
 install(DIRECTORY
+  config
   meshes
   urdf
   launch

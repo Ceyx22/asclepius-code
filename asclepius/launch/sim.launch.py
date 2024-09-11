@@ -20,12 +20,12 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time', default=True)
 
     project_path = os.path.join(
-        get_package_share_directory('dynamixel_arm'))
+        get_package_share_directory('asclepius'))
 
     xacro_file = os.path.join(project_path,
                               'urdf',
-                              'acps_bot.urdf.xacro')
-    rvizcfg = os.path.join(get_package_share_directory('dynamixel_arm'), 'rviz/viewrobot.rviz')
+                              'asclepius.urdf.xacro')
+    rvizcfg = os.path.join(get_package_share_directory('asclepius'), 'rviz/viewrobot.rviz')
     doc = xacro.parse(open(xacro_file))
     xacro.process_doc(doc)
     params = {'robot_description': doc.toxml()}
@@ -42,7 +42,7 @@ def generate_launch_description():
         executable='create',
         output='screen',
         arguments=['-string', doc.toxml(),
-                   '-name', 'acps_bot',
+                   '-name', 'robot',
                    '-allow_renaming', 'true'],
     )
     rviz_node = Node(
@@ -58,7 +58,7 @@ def generate_launch_description():
         output='screen'
     )
 
-    load_acps_controller = ExecuteProcess(
+    load_joint_controller = ExecuteProcess(
         cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
              'joint_trajectory_controller'],
         output='screen'
@@ -77,12 +77,12 @@ def generate_launch_description():
                 on_exit=[load_joint_state_broadcaster],
             )
         ),
-        # RegisterEventHandler(
-        #     event_handler=OnProcessExit(
-        #         target_action=load_joint_state_broadcaster,
-        #         on_exit=[load_acps_controller],
-        #     )
-        # ),
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=load_joint_state_broadcaster,
+                on_exit=[load_joint_controller],
+            )
+        ),
         node_robot_state_publisher,
         spawn_entity,
         rviz_node,
