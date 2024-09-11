@@ -1,0 +1,423 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:macro name="asclepius">
+
+  <link name="world"/>
+  <joint name="origin_to_joint1" type="fixed">
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <parent link="world"/>
+        <child link="base_link"/>
+    </joint>
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="-0.086306861764843 9.70515747599626E-06 0.039109778900725"
+        rpy="0 0 0" />
+      <mass
+        value="0.405852979277494" />
+      <inertia
+        ixx="0.000275848359219685"
+        ixy="1.01042451677911E-11"
+        ixz="-7.4936131547004E-08"
+        iyy="0.000437308620333477"
+        iyz="-9.22827074612079E-08"
+        izz="0.000492690805445302" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://asclepius/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://asclepius/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="link1">
+    <inertial>
+      <origin
+        xyz="0.011846 -0.014295 0.039343"
+        rpy="0 0 0" />
+      <mass
+        value="0.21222" />
+      <inertia
+        ixx="0.0002512"
+        ixy="-8.024E-09"
+        ixz="-1.848E-05"
+        iyy="0.00014425"
+        iyz="7.243E-09"
+        izz="0.00024638" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://asclepius/meshes/link1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://asclepius/meshes/link1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint1"
+    type="continuous">
+    <origin
+      xyz="0 0 0.031263"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="link1" />
+    <axis
+      xyz="0 0 1" />
+  </joint>
+  <link
+    name="link2">
+    <inertial>
+      <origin
+        xyz="-1.3566E-05 0.0861 -0.0053137"
+        rpy="0 0 0" />
+      <mass
+        value="0.34725" />
+      <inertia
+        ixx="0.0011171"
+        ixy="-3.2957E-07"
+        ixz="-5.3911E-09"
+        iyy="0.00023759"
+        iyz="2.3932E-05"
+        izz="0.00096713" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://asclepius/meshes/link2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://asclepius/meshes/link2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint2"
+    type="continuous">
+    <origin
+      xyz="0.0445 0 0.0625"
+      rpy="1.5708 0 0" />
+    <parent
+      link="link1" />
+    <child
+      link="link2" />
+    <axis
+      xyz="0 0 1" />
+  </joint>
+  <link
+    name="link3">
+    <inertial>
+      <origin
+        xyz="0.117717019514311 -0.00309405693118706 0.00101010086707825"
+        rpy="0 0 0" />
+      <mass
+        value="0.468865020431029" />
+      <inertia
+        ixx="0.000139996023442463"
+        ixy="-4.70526024072992E-06"
+        ixz="1.56800215706482E-06"
+        iyy="0.00175303988142068"
+        iyz="-1.39307808720171E-07"
+        izz="0.00165738035209707" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://asclepius/meshes/link3.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://asclepius/meshes/link3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint3"
+    type="continuous">
+    <origin
+      xyz="0 0.187 0"
+      rpy="0 0 0" />
+    <parent
+      link="link2" />
+    <child
+      link="link3" />
+    <axis
+      xyz="0 0 1" />
+  </joint>
+  <link
+    name="link4">
+    <inertial>
+      <origin
+        xyz="6.6824E-09 -1.1152E-08 0.0032766"
+        rpy="0 0 0" />
+      <mass
+        value="0.00033225" />
+      <inertia
+        ixx="3.0044E-09"
+        ixy="7.1937E-14"
+        ixz="-5.8181E-16"
+        iyy="3.3864E-09"
+        iyz="2.6589E-14"
+        izz="3.0656E-09" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://asclepius/meshes/link4.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.25098 0.25098 0.25098 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://asclepius/meshes/link4.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint4"
+    type="continuous">
+    <origin
+      xyz="0.54045 0.01725 0.0009"
+      rpy="-1.5708 0 -1.5708" />
+    <parent
+      link="link3" />
+    <child
+      link="link4" />
+    <axis
+      xyz="0 0 1" />
+  </joint>
+  <link
+    name="link5">
+    <inertial>
+      <origin
+        xyz="0.0037149 -5.0761E-05 -1.9893E-07"
+        rpy="0 0 0" />
+      <mass
+        value="0.00024719" />
+      <inertia
+        ixx="1.4508E-09"
+        ixy="-4.6798E-13"
+        ixz="5.6106E-14"
+        iyy="2.1797E-09"
+        iyz="-6.8209E-14"
+        izz="2.5126E-09" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://asclepius/meshes/link5.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.75294 0.75294 0.75294 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://asclepius/meshes/link5.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint5"
+    type="continuous">
+    <origin
+      xyz="0 0 0.0091"
+      rpy="3.1416 -1.5708 0" />
+    <parent
+      link="link4" />
+    <child
+      link="link5" />
+    <axis
+      xyz="0 0 -1" />
+  </joint>
+  <link
+    name="link6">
+    <inertial>
+      <origin
+        xyz="0.0080523 0.00059191 0.00045913"
+        rpy="0 0 0" />
+      <mass
+        value="9.8123E-05" />
+      <inertia
+        ixx="3.1452E-10"
+        ixy="-1.9346E-10"
+        ixz="3.0002E-10"
+        iyy="4.924E-09"
+        iyz="1.7634E-11"
+        izz="4.7615E-09" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://asclepius/meshes/link6.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.59216 0.50196 0.50196 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://asclepius/meshes/link6.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint6"
+    type="continuous">
+    <origin
+      xyz="0.0089 0 0"
+      rpy="1.5708 0 0" />
+    <parent
+      link="link5" />
+    <child
+      link="link6" />
+    <axis
+      xyz="0 0 1" />
+  </joint>
+  <link
+    name="link7">
+    <inertial>
+      <origin
+        xyz="0.0080606 -0.00059444 -0.00036241"
+        rpy="0 0 0" />
+      <mass
+        value="9.72E-05" />
+      <inertia
+        ixx="3.1256E-10"
+        ixy="1.9347E-10"
+        ixz="-3.0023E-10"
+        iyy="4.9052E-09"
+        iyz="1.7723E-11"
+        izz="4.7445E-09" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://asclepius/meshes/link7.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.59216 0.50196 0.50196 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://asclepius/meshes/link7.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint7"
+    type="continuous">
+    <origin
+      xyz="0.0089 0 0"
+      rpy="1.5708 0 0" />
+    <parent
+      link="link5" />
+    <child
+      link="link7" />
+    <axis
+      xyz="0 0 -1" />
+  </joint>
+  </xacro:macro>
+</robot>

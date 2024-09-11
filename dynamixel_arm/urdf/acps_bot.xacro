@@ -1,0 +1,267 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:macro name="acps_bot">
+    <link name="world"/>
+    <link
+        name="base_link">
+        <inertial>
+        <origin
+            xyz="0.0050632 -2.8932E-09 0.024787"
+            rpy="0 0 0" />
+        <mass
+            value="0.090196" />
+        <inertia
+            ixx="1.7793E-05"
+            ixy="-9.8445E-12"
+            ixz="6.6333E-10"
+            iyy="3.1931E-05"
+            iyz="-6.3531E-13"
+            izz="4.6413E-05" />
+        </inertial>
+        <visual>
+        <origin
+            xyz="0 0 0"
+            rpy="0 0 0" />
+        <geometry>
+            <mesh
+            filename="package://dynamixel_arm/meshes/base_link.STL" />
+        </geometry>
+        <material
+            name="">
+            <color
+            rgba="0.79216 0.81961 0.93333 1" />
+        </material>
+        </visual>
+        <collision>
+        <origin
+            xyz="0 0 0"
+            rpy="0 0 0" />
+        <geometry>
+            <mesh
+            filename="package://dynamixel_arm/meshes/base_link.STL" />
+        </geometry>
+        </collision>
+    </link>
+    <link
+        name="link1">
+        <inertial>
+        <origin
+            xyz="-4.8378E-09 -0.00096454 0.02552"
+            rpy="0 0 0" />
+        <mass
+            value="0.05394" />
+        <inertia
+            ixx="1.235E-05"
+            ixy="6.3531E-13"
+            ixz="9.8445E-12"
+            iyy="1.1336E-05"
+            iyz="-3.2723E-08"
+            izz="8.0276E-06" />
+        </inertial>
+        <visual>
+        <origin
+            xyz="0 0 0"
+            rpy="0 0 0" />
+        <geometry>
+            <mesh
+            filename="package://dynamixel_arm/meshes/link1.STL" />
+        </geometry>
+        <material
+            name="">
+            <color
+            rgba="0.79216 0.81961 0.93333 1" />
+        </material>
+        </visual>
+        <collision>
+        <origin
+            xyz="0 0 0"
+            rpy="0 0 0" />
+        <geometry>
+            <mesh
+            filename="package://dynamixel_arm/meshes/link1.STL" />
+        </geometry>
+        </collision>
+    </link>
+    
+    <link
+        name="link2">
+        <inertial>
+        <origin
+            xyz="0.076862 3.2486E-09 0.0019947"
+            rpy="0 0 0" />
+        <mass
+            value="0.080328" />
+        <inertia
+            ixx="7.0482E-06"
+            ixy="-9.8445E-12"
+            ixz="3.7071E-07"
+            iyy="4.3452E-05"
+            iyz="6.3531E-13"
+            izz="4.7253E-05" />
+        </inertial>
+        <visual>
+        <origin
+            xyz="0 0 0"
+            rpy="0 0 0" />
+        <geometry>
+            <mesh
+            filename="package://dynamixel_arm/meshes/link2.STL" />
+        </geometry>
+        <material
+            name="">
+            <color
+            rgba="0.79216 0.81961 0.93333 1" />
+        </material>
+        </visual>
+        <collision>
+        <origin
+            xyz="0 0 0"
+            rpy="0 0 0" />
+        <geometry>
+            <mesh
+            filename="package://dynamixel_arm/meshes/link2.STL" />
+        </geometry>
+        </collision>
+    </link>
+    
+    <link
+        name="link3">
+        <inertial>
+        <origin
+            xyz="0.076862 3.2486E-09 0.0020359"
+            rpy="0 0 0" />
+        <mass
+            value="0.080328" />
+        <inertia
+            ixx="7.0482E-06"
+            ixy="-9.8445E-12"
+            ixz="3.7071E-07"
+            iyy="4.3452E-05"
+            iyz="6.3531E-13"
+            izz="4.7253E-05" />
+        </inertial>
+        <visual>
+        <origin
+            xyz="0 0 0"
+            rpy="0 0 0" />
+        <geometry>
+            <mesh
+            filename="package://dynamixel_arm/meshes/link3.STL" />
+        </geometry>
+        <material
+            name="">
+            <color
+            rgba="0.79216 0.81961 0.93333 1" />
+        </material>
+        </visual>
+        <collision>
+        <origin
+            xyz="0 0 0"
+            rpy="0 0 0" />
+        <geometry>
+            <mesh
+            filename="package://dynamixel_arm/meshes/link3.STL" />
+        </geometry>
+        </collision>
+    </link>
+    
+    <link
+        name="link4">
+        <inertial>
+        <origin
+            xyz="0.012363 -6.9389E-17 0.001"
+            rpy="0 0 0" />
+        <mass
+            value="0.011748" />
+        <inertia
+            ixx="3.7944E-06"
+            ixy="2.1774E-20"
+            ixz="-1.5694E-21"
+            iyy="3.709E-06"
+            iyz="-1.7401E-20"
+            izz="1.8647E-06" />
+        </inertial>
+        <visual>
+        <origin
+            xyz="0 0 0"
+            rpy="0 0 0" />
+        <geometry>
+            <mesh
+            filename="package://dynamixel_arm/meshes/link4.STL" />
+        </geometry>
+        <material
+            name="">
+            <color
+            rgba="0.79216 0.81961 0.93333 1" />
+        </material>
+        </visual>
+        <collision>
+        <origin
+            xyz="0 0 0"
+            rpy="0 0 0" />
+        <geometry>
+            <mesh
+            filename="package://dynamixel_arm/meshes/link4.STL" />
+        </geometry>
+        </collision>
+    </link>
+    <joint name="origin_to_joint1" type="fixed">
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <parent link="world"/>
+        <child link="base_link"/>
+    </joint>
+    <joint
+        name="joint1"
+        type="continuous">
+        <origin
+        xyz="0 0 0.0548"
+        rpy="0 0 0" />
+        <parent
+        link="base_link" />
+        <child
+        link="link1" />
+        <axis
+        xyz="0 0 1" />
+    </joint>
+    <joint
+        name="joint2"
+        type="continuous">
+        <origin
+        xyz="0 0 0.04355"
+        rpy="1.5708 0 0" />
+        <parent
+        link="link1" />
+        <child
+        link="link2" />
+        <axis
+        xyz="0 0 -1" />
+    </joint>
+    <joint
+        name="joint3"
+        type="continuous">
+        <origin
+        xyz="0.11855 0 0"
+        rpy="0 0 0" />
+        <parent
+        link="link2" />
+        <child
+        link="link3" />
+        <axis
+        xyz="0 0 -1" />
+    </joint>
+    <joint
+        name="joint4"
+        type="continuous">
+        <origin
+        xyz="0.11855 0 0"
+        rpy="0 0 0" />
+        <parent
+        link="link3" />
+        <child
+        link="link4" />
+        <axis
+        xyz="0 0 -1" />
+    </joint>
+    </xacro:macro>
+
+</robot>
