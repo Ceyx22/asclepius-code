@@ -1,7 +1,9 @@
 controller_manager:
   ros__parameters:
     update_rate: 100  # Hz
-    # use_sim_time  :true
+
+    # velocity_controller:
+    #   type: velocity_controllers/JointGroupVelocityController
 
     joint_trajectory_controller:
       type: joint_trajectory_controller/JointTrajectoryController
@@ -9,6 +11,16 @@ controller_manager:
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
+# velocity_controller:
+#   ros__parameters:
+#     joints:
+#       - joint1
+#       - joint2
+#       - joint3
+#       - joint4
+#       - joint5
+#       - joint6
+#       - joint7
 
 joint_trajectory_controller:
   ros__parameters:

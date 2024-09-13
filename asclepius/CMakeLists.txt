@@ -9,21 +9,50 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(std_msgs REQUIRED)
+
 find_package(robot_state_publisher REQUIRED)
 find_package(xacro REQUIRED)
 find_package(urdf REQUIRED)
+find_package(eigen3_cmake_module REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(rviz2 REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(kdl_parser REQUIRED)
 
-# Install things for simulation
+
+find_package(trajectory_msgs REQUIRED)
+
+
+include_directories(include)
+add_executable(chain src/KinematicChain.cpp)
+add_executable(kinPub src/KinematicPublisher.cpp)
+ament_target_dependencies(chain rclcpp geometry_msgs urdf Eigen3)
+ament_target_dependencies(kinPub rclcpp geometry_msgs urdf kdl_parser std_msgs)
+
+
 install(DIRECTORY
   config
   meshes
-  urdf
+  description
   launch
   rviz
+  scripts
   DESTINATION share/${PROJECT_NAME}
 )
+
+# Install nodes
+install(TARGETS
+  chain
+  kinPub
+  DESTINATION lib/${PROJECT_NAME}
+  )
+  
+install(PROGRAMS    
+  scripts/KinematicSol.py
+  scripts/TransformationHelp.py
+  DESTINATION lib/${PROJECT_NAME})
+# Install things for simulation
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

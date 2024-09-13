@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 
 from ament_index_python.packages import get_package_share_directory
@@ -23,8 +25,8 @@ def generate_launch_description():
         get_package_share_directory('asclepius'))
 
     xacro_file = os.path.join(project_path,
-                              'urdf',
-                              'asclepius.urdf.xacro')
+                              'description',
+                              'asclepius_gazebo.urdf.xacro')
     rvizcfg = os.path.join(get_package_share_directory('asclepius'), 'rviz/viewrobot.rviz')
     doc = xacro.parse(open(xacro_file))
     xacro.process_doc(doc)

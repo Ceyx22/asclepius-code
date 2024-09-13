@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 import os
 from ament_index_python.packages import get_package_share_directory as pkgdir
@@ -10,7 +11,7 @@ import xacro
 
 def generate_launch_description():
     pkg_name = 'asclepius'
-    file_subpath = 'urdf/asclepius.urdf.xacro'
+    file_subpath = 'description/asclepius.urdf.xacro'
     
     # Locate the RVIZ configuration file.
     rvizcfg = os.path.join(pkgdir(pkg_name), 'rviz/viewrobot.rviz')

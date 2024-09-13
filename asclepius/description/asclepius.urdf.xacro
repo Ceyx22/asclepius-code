@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<robot name="asclepius" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:include filename="$(find asclepius)/description/asclepius.xacro" />
+  <!-- <xacro:include filename="$(find asclepius)/description/ros2_control_gazebo.xacro" /> -->
+  <xacro:include filename="$(find asclepius)/description/hardware_control.xacro" />
+
+
+
+  <xacro:robot/>
+  <xacro:hardware_control/>
+  <!-- <xacro:GZSystem/> -->
+
+</robot>
