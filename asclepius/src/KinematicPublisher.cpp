@@ -1,94 +1,3 @@
-// #include <stdio.h>
-// #include <string>
-// #include "rclcpp/rclcpp.hpp"
-// #include "rclcpp/qos.hpp"
-// #include "std_msgs/msg/string.hpp"
-// #include "kdl/tree.hpp"
-// #include "kdl/chain.hpp"
-// #include "kdl/frames.hpp"
-// #include "kdl/jntarray.hpp"
-// #include "kdl/chainiksolverpos_lma.hpp"
-// #include "kdl/chainiksolverpos_nr.hpp"
-// #include "kdl/chainiksolvervel_pinv.hpp"
-// #include "kdl_parser/kdl_parser.hpp"
-
-// using std::placeholders::_1;
-
-// class KinematicPublisher : public rclcpp::Node
-// {
-// public:
-//     KinematicPublisher() : Node("kinematic_publisher")
-//     {
-
-//         // Set up subscriber for joint states
-//         subscriber_ = this->create_subscription<std_msgs::msg::String>(
-//             "robot_description", rclcpp::QoS(rclcpp::KeepLast(1)).durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL), 
-//             std::bind(&KinematicPublisher::robotDescriptionCallback, this, _1));
-//     }
-
-// private:
-
-//     void robotDescriptionCallback(const std_msgs::msg::String& msg)
-//     {
-//         // Construct KDL tree from URDF
-//         const std::string urdf = msg.data;
-//         kdl_parser::treeFromString(urdf, tree_);
-//         // Print basic information about the tree
-//         std::cout << "nb joints:        " << tree_.getNrOfJoints() << std::endl;
-//         std::cout << "nb segments:      " << tree_.getNrOfSegments() << std::endl;
-//         std::cout << "root segment:     " << tree_.getRootSegment()->first << std::endl;
-
-
-//         tree_.getChain("base_link", "link6", chain_);
-//         std::cout << "chain nb joints:  " << chain_.getNrOfJoints() << std::endl;
-
-//         // Create IK solver
-//         solver_ = std::make_unique<KDL::ChainIkSolverPos_LMA>(chain_);
-
-//         // Run usage example
-//         usageExample();        
-//     }
-
-//     //! Cartesian x, z => hip and knee joint angles
-//     void getJointAngles() // const double x, const double z, double & hip_angle, double & knee_angle std::vector<double> q
-//     {
-//         KDL::JntArray q_init(chain_.getNrOfJoints());
-//         q_init(0) = -0.1;
-//         q_init(1) = 0.2;
-//         const KDL::Frame p_in(KDL::Vector(0.8, 0.8, 0.8));
-//         KDL::JntArray q_out(chain_.getNrOfJoints());
-//         // Run IK solver
-//         solver_->CartToJnt(q_init, p_in, q_out);
-//         // Write out
-//         for (int i = 0; i < 6; i++) {
-//             std::cout << q_out(i) << "\n";
-//         }
-        
-               
-//     }
-
-  
-//     void usageExample()
-//     {
-//         getJointAngles(); //0.3, -0.6, hip_angle, knee_angle
-//         fflush(stdout);
-//     }
-
-//     // Class members
-//     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscriber_;
-//     KDL::Tree tree_;
-//     KDL::Chain chain_;
-//     std::unique_ptr<KDL::ChainIkSolverPos_LMA> solver_;
-// };
-
-// int main(int argc, char **argv)
-// {
-//     rclcpp::init(argc, argv);
-//     auto node = std::make_shared<KinematicPublisher>();
-//     rclcpp::spin(node);
-//     rclcpp::shutdown();
-//     return 0;
-// }
 #include <stdio.h>
 #include <string>
 #include <memory>
@@ -147,19 +56,22 @@ public:
         action_client_ = rclcpp_action::create_client<FollowJointTrajectory>(this, action_name);
 
         // Wait for the action server to be available
-        if (!action_client_->wait_for_action_server(std::chrono::seconds(10))) {
+        if (!action_client_->wait_for_action_server(std::chrono::seconds(10)))
+        {
             RCLCPP_ERROR(this->get_logger(), "Action server not available after waiting");
             rclcpp::shutdown();
-        } else {
+        }
+        else
+        {
             RCLCPP_INFO(this->get_logger(), "Action server available.");
         }
     }
 
 private:
-
     void robotDescriptionCallback(const std_msgs::msg::String::SharedPtr msg)
     {
-        if (urdf_received_) return; // Process URDF only once
+        if (urdf_received_)
+            return; // Process URDF only once
 
         // Construct KDL tree from URDF
         const std::string urdf = msg->data;
@@ -187,7 +99,7 @@ private:
 
         // Get joint names from the chain
         joint_names_.clear();
-        for (const auto& segment : chain_.segments)
+        for (const auto &segment : chain_.segments)
         {
             if (segment.getJoint().getType() != KDL::Joint::None)
             {
@@ -234,7 +146,7 @@ private:
         }
     }
 
-    void sendJointTrajectoryAction(const KDL::JntArray& joint_positions)
+    void sendJointTrajectoryAction(const KDL::JntArray &joint_positions)
     {
         // Create a FollowJointTrajectory goal message
         auto goal_msg = FollowJointTrajectory::Goal();
@@ -265,9 +177,12 @@ private:
     // Updated function signature
     void goalResponseCallback(GoalHandleFollowJointTrajectory::SharedPtr goal_handle)
     {
-        if (!goal_handle) {
+        if (!goal_handle)
+        {
             RCLCPP_ERROR(this->get_logger(), "Goal was rejected by server");
-        } else {
+        }
+        else
+        {
             RCLCPP_INFO(this->get_logger(), "Goal accepted by server, waiting for result");
         }
     }
@@ -279,21 +194,22 @@ private:
         RCLCPP_INFO(this->get_logger(), "Received feedback");
     }
 
-    void resultCallback(const GoalHandleFollowJointTrajectory::WrappedResult & result)
+    void resultCallback(const GoalHandleFollowJointTrajectory::WrappedResult &result)
     {
-        switch (result.code) {
-            case rclcpp_action::ResultCode::SUCCEEDED:
-                RCLCPP_INFO(this->get_logger(), "Goal succeeded!");
-                break;
-            case rclcpp_action::ResultCode::ABORTED:
-                RCLCPP_ERROR(this->get_logger(), "Goal was aborted");
-                break;
-            case rclcpp_action::ResultCode::CANCELED:
-                RCLCPP_WARN(this->get_logger(), "Goal was canceled");
-                break;
-            default:
-                RCLCPP_ERROR(this->get_logger(), "Unknown result code");
-                break;
+        switch (result.code)
+        {
+        case rclcpp_action::ResultCode::SUCCEEDED:
+            RCLCPP_INFO(this->get_logger(), "Goal succeeded!");
+            break;
+        case rclcpp_action::ResultCode::ABORTED:
+            RCLCPP_ERROR(this->get_logger(), "Goal was aborted");
+            break;
+        case rclcpp_action::ResultCode::CANCELED:
+            RCLCPP_WARN(this->get_logger(), "Goal was canceled");
+            break;
+        default:
+            RCLCPP_ERROR(this->get_logger(), "Unknown result code");
+            break;
         }
         rclcpp::shutdown();
     }

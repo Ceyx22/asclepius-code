@@ -54,12 +54,12 @@ def generate_launch_description():
             output="screen",
         ),
 
-        Node(
-            package="controller_manager",
-            executable="spawner",
-            arguments=["velocity_controller", "-c", "/controller_manager"],
-            output="screen",
-        ),
+        # Node(
+        #     package="controller_manager",
+        #     executable="spawner",
+        #     arguments=["velocity_controller", "-c", "/controller_manager"],
+        #     output="screen",
+        # ),
 
         Node(
             package="controller_manager",
@@ -76,13 +76,12 @@ def generate_launch_description():
                 params],
             output="screen",
         ),
-
         Node(
             package="rviz2",
             executable="rviz2",
             name="rviz2",
             arguments=["-d", rvizcfg],
             output="screen",
-        )
+        ),
 
     ])

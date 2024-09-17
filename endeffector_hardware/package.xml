@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>endeffector_hardware</name>
+  <version>0.1.0</version>
+  <description>Dynamixel Hardware Interface for AX-12A using Dynamixel SDK</description>
+
+  <maintainer email="your.email@example.com">Your Name</maintainer>
+  <license>Apache License 2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>hardware_interface</depend>
+  <depend>pluginlib</depend>
+  <depend>rclcpp</depend>
+  <depend>dynamixel_sdk</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+    <hardware_interface plugin="${prefix}/share/endeffector_hardware/dynamixel_hardware_plugin.xml"/>
+  </export>
+</package>

@@ -11,7 +11,7 @@ import xacro
 
 def generate_launch_description():
     pkg_name = 'asclepius'
-    file_subpath = 'description/asclepius.urdf.xacro'
+    file_subpath = 'description/asclepius_gazebo.urdf.xacro'
     
     # Locate the RVIZ configuration file.
     rvizcfg = os.path.join(pkgdir(pkg_name), 'rviz/viewrobot.rviz')
