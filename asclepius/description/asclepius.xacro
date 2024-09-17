@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+<xacro:include filename="$(find asclepius)/description/util.xacro" />
+
 <xacro:macro name="robot">
 
   <link name="world"/>
@@ -33,10 +35,7 @@
           filename="file://$(find asclepius)/meshes/base_link.STL" />
       </geometry>
       <material
-        name="">
-        <color
-          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
-      </material>
+        name="red"/>
     </visual>
     <collision>
       <origin
@@ -72,11 +71,8 @@
         <mesh
           filename="file://$(find asclepius)/meshes/link1.STL" />
       </geometry>
-      <material
-        name="">
-        <color
-          rgba="0.79216 0.81961 0.93333 1" />
-      </material>
+      <material name="blue"/>
+        
     </visual>
     <collision>
       <origin
@@ -126,10 +122,7 @@
           filename="file://$(find asclepius)/meshes/link2.STL" />
       </geometry>
       <material
-        name="">
-        <color
-          rgba="0.79216 0.81961 0.93333 1" />
-      </material>
+        name="magenta"/>
     </visual>
     <collision>
       <origin
@@ -179,10 +172,8 @@
           filename="file://$(find asclepius)/meshes/link3.STL" />
       </geometry>
       <material
-        name="">
-        <color
-          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
-      </material>
+        name="green"/>
+        
     </visual>
     <collision>
       <origin
@@ -232,10 +223,7 @@
           filename="file://$(find asclepius)/meshes/link4.STL" />
       </geometry>
       <material
-        name="">
-        <color
-          rgba="0.25098 0.25098 0.25098 1" />
-      </material>
+        name="cyan"/>
     </visual>
     <collision>
       <origin
@@ -285,10 +273,7 @@
           filename="file://$(find asclepius)/meshes/link5.STL" />
       </geometry>
       <material
-        name="">
-        <color
-          rgba="0.75294 0.75294 0.75294 1" />
-      </material>
+        name="magenta"/>
     </visual>
     <collision>
       <origin
@@ -338,10 +323,7 @@
           filename="file://$(find asclepius)/meshes/link6.STL" />
       </geometry>
       <material
-        name="">
-        <color
-          rgba="0.59216 0.50196 0.50196 1" />
-      </material>
+        name="red"/>
     </visual>
     <collision>
       <origin
@@ -391,10 +373,7 @@
           filename="file://$(find asclepius)/meshes/link7.STL" />
       </geometry>
       <material
-        name="">
-        <color
-          rgba="0.59216 0.50196 0.50196 1" />
-      </material>
+        name="blue"/>
     </visual>
     <collision>
       <origin

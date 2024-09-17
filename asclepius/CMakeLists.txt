@@ -8,6 +8,8 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+# find_package(rclcpp_action REQUIRED)
+
 find_package(geometry_msgs REQUIRED)
 
 find_package(robot_state_publisher REQUIRED)
@@ -18,16 +20,21 @@ find_package(Eigen3 REQUIRED)
 find_package(rviz2 REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(kdl_parser REQUIRED)
+find_package(tf2_kdl REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
 
+find_package(rclcpp_action REQUIRED)
+find_package(control_msgs REQUIRED)
 find_package(trajectory_msgs REQUIRED)
 
 
 include_directories(include)
-add_executable(chain src/KinematicChain.cpp)
+add_executable(ik src/KDLInverseKinematicsNode.cpp)
 add_executable(kinPub src/KinematicPublisher.cpp)
-ament_target_dependencies(chain rclcpp geometry_msgs urdf Eigen3)
-ament_target_dependencies(kinPub rclcpp geometry_msgs urdf kdl_parser std_msgs)
+ament_target_dependencies(ik rclcpp geometry_msgs urdf kdl_parser std_msgs trajectory_msgs control_msgs rclcpp_action tf2_kdl tf2_geometry_msgs)
+ament_target_dependencies(kinPub rclcpp geometry_msgs urdf kdl_parser std_msgs sensor_msgs trajectory_msgs control_msgs rclcpp_action)
 
 
 install(DIRECTORY
@@ -42,7 +49,7 @@ install(DIRECTORY
 
 # Install nodes
 install(TARGETS
-  chain
+  ik
   kinPub
   DESTINATION lib/${PROJECT_NAME}
   )

@@ -66,7 +66,7 @@ def generate_launch_description():
     node_trajectory = Node(
         name       = 'trajectory', 
         package    = 'asclepius',
-        executable = 'chain',
+        executable = 'kinNode',
         output     = 'screen')
     
     node_pos = Node(
