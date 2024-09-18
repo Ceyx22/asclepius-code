@@ -37,7 +37,7 @@ namespace dynamixel_hardware
   {
     double position{0.0};
     double velocity{0.0};
-    // double effort{0.0};
+    double effort{0.0};
   };
 
   struct Joint
@@ -93,8 +93,8 @@ namespace dynamixel_hardware
     return_type reset_command();
 
     CallbackReturn set_joint_positions();
-    // CallbackReturn set_joint_velocities();
-    // CallbackReturn set_joint_params();
+    CallbackReturn set_joint_velocities();
+    CallbackReturn set_joint_params();
 
     DynamixelWorkbench dynamixel_workbench_;
     std::map<const char *const, const ControlItem *> control_items_;

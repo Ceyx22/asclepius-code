@@ -42,8 +42,8 @@
 
     <ros2_control name="hardware_control" type="system">
       <hardware>
-        <!-- <plugin>endeffector_hardware/EndeffectorHardware</plugin> -->
-        <plugin>dynamixel_hardware/DynamixelHardware</plugin>
+        <plugin>endeffector_hardware/EndeffectorHardware</plugin>
+        <!-- <plugin>dynamixel_hardware/DynamixelHardware</plugin> -->
         <param name="usb_port">/dev/ttyUSB0</param>
         <param name="baud_rate">1000000</param>
         <!-- <param name="use_dummy">true</param> -->

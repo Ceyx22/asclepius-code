@@ -35,6 +35,7 @@ namespace endeffector_hardware
     JointValue command{};
     JointValue prev_command{};
   };
+
   class EndeffectorHardware : public hardware_interface::SystemInterface
   {
   public:
@@ -63,24 +64,27 @@ namespace endeffector_hardware
 
   private:
     return_type enable_torque(const bool enabled);
+    return_type reset_command();
 
     // Helper functions
-    bool initialize_servos();
-    bool ping_servo(uint8_t id);
-    CallbackReturn set_joint_positions();
-    int32_t read_position(uint8_t id);
-    bool write_position(uint8_t id, int32_t position);
-    void calibrate_servos();
+    // bool initialize_servos();
+    // bool ping_servo(uint8_t id);
+    // CallbackReturn set_joint_positions();
+
+    // int32_t read_position(uint8_t id);
+    // bool write_position(uint8_t id, int32_t position);
+    // void calibrate_servos();
 
     // Dynamixel SDK members
     dynamixel::PortHandler *portHandler_;
     dynamixel::PacketHandler *packetHandler_;
+    // dynamixel::GroupSyncWrite *groupSync_;
 
     // Servo IDs and joint names
     std::vector<uint8_t> servo_ids_;
     std::vector<Joint> joints_;
 
-    std::vector<std::string> joint_names_;
+    // std::vector<std::string> joint_names_;
 
     // Joint state and command variables
     std::unordered_map<std::string, double> position_commands_;
@@ -94,7 +98,7 @@ namespace endeffector_hardware
     bool use_dummy_ = false;
     bool torque_enabled_ = false;
 
-    rclcpp::Publisher<std_msgs::msg::Int32MultiArray>::SharedPtr motor_position_publisher_; // <-- Declared here
+    // rclcpp::Publisher<std_msgs::msg::Int32MultiArray>::SharedPtr motor_position_publisher_;
   };
 
 } // namespace ENDEFFECTOR_HARDWARE_interface
