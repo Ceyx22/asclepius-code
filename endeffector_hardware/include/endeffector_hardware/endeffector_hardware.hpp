@@ -26,7 +26,7 @@ namespace endeffector_hardware
   // {
   //   double position{0.0};
   //   double velocity{0.0};
-  //   double effort{0.0};
+  //   // double effort{0.0};
   // };
 
   // struct Joint
@@ -64,41 +64,30 @@ namespace endeffector_hardware
 
   private:
     return_type enable_torque(const bool enabled);
+    return_type ping_servo(uint8_t id);
+    return_type initialize_servos();
+
     return_type reset_command();
+    int32_t addToWrite(uint8_t id, double command_position);
+    int32_t rad_to_pos(uint8_t id, double command_position);
+    int32_t pos_to_rad(double position);
 
-    // Helper functions
-    bool initialize_servos();
-    bool ping_servo(uint8_t id);
-    // CallbackReturn set_joint_positions();
-
-    int32_t read_position(uint8_t id);
-    bool write_position(uint8_t id, int32_t position);
-    void calibrate_servos();
+    int32_t read_param(uint8_t id, uint16_t address);
 
     // Dynamixel SDK members
     dynamixel::PortHandler *portHandler_;
     dynamixel::PacketHandler *packetHandler_;
-    dynamixel::GroupBulkRead *groupBulkRead_;
-    // dynamixel::GroupBulkWrite *groupBulkWrite_;
     dynamixel::GroupSyncWrite *groupSyncWrite_;
 
     // Servo IDs and joint names
     std::vector<uint8_t> servo_ids_;
-    // std::vector<Joint> joints_;
-
     std::vector<std::string> joint_names_;
-
+    // std::vector<Joint> joints_;
+    // std::unordered_map<std::string, double> position_commands_;
     // Joint state and command variables
     std::unordered_map<std::string, double> position_commands_;
-    std::unordered_map<std::string, double> velocity_commands_;
     std::unordered_map<std::string, double> position_states_;
     std::unordered_map<std::string, double> velocity_states_;
-
-    // std::map<const char *const, const ControlItem *> control_items_;
-
-    // Dummy mode flag
-    bool use_dummy_ = false;
-    bool torque_enabled_ = false;
 
     // rclcpp::Publisher<std_msgs::msg::Int32MultiArray>::SharedPtr motor_position_publisher_;
   };
