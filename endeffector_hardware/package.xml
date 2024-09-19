@@ -16,6 +16,6 @@
 
   <export>
     <build_type>ament_cmake</build_type>
-    <hardware_interface plugin="${prefix}/share/endeffector_hardware/dynamixel_hardware_plugin.xml"/>
+    <hardware_interface plugin="${prefix}/share/endeffector_hardware/endeffector_hardware.xml"/>
   </export>
 </package>

@@ -55,9 +55,11 @@ install(
 )
 
 
-# install(
-#   FILES _hardware_plugin.xml
-#   DESTINATION share/${PROJECT_NAME}
-# )
-
+install(
+  FILES endeffector_hardware.xml
+  DESTINATION share/${PROJECT_NAME}
+)
+ament_export_libraries(
+  ${PROJECT_NAME}
+)
 ament_package()

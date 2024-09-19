@@ -1,7 +1,7 @@
 <library path="endeffector_hardware">
-    <class name="endeffector_hardware/EndeffectorHardware" type="endeffector_hardware::EndeffectorHardware" base_class_type="hardware_interface::SystemInterface">
-        <description>
+  <class name="endeffector_hardware/EndeffectorHardware" type="endeffector_hardware::EndeffectorHardware" base_class_type="hardware_interface::SystemInterface">
+    <description>
       Dynamixel Hardware Interface for AX-12A using Dynamixel SDK.
-        </description>
-    </class>
+    </description>
+  </class>
 </library>

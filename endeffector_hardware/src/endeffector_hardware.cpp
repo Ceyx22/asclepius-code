@@ -1,5 +1,3 @@
-// File: endeffector_hardware/src/endeffector_hardware.cpp
-
 #include "endeffector_hardware/endeffector_hardware.hpp"
 
 #include <cmath>
@@ -9,8 +7,7 @@
 
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rclcpp/rclcpp.hpp"
-// #include <rclcpp/rclcpp.hpp>
-#include <std_msgs/msg/int32_multi_array.hpp>
+#include "dynamixel_sdk/dynamixel_sdk.h" // Dynamixel SDK for GroupSyncWrite
 
 namespace endeffector_hardware
 {
@@ -23,9 +20,6 @@ namespace endeffector_hardware
   constexpr uint8_t TORQUE_ENABLE = 1;
   constexpr uint8_t TORQUE_DISABLE = 0;
 
-  constexpr uint8_t LEN_GOAL_POSITION = 2;
-  constexpr uint8_t LEN_PRESENT_POSITION = 2;
-
   constexpr double PROTOCOL_VERSION = 1.0;
 
   // Limits for AX-12A
@@ -34,75 +28,113 @@ namespace endeffector_hardware
   constexpr double DXL_MIN_ANGLE = 0.0;                  // Minimum angle in radians
   constexpr double DXL_MAX_ANGLE = 300.0 * M_PI / 180.0; // Maximum angle in radians
 
-  constexpr int32_t DXL_MOTOR_POSITION_OFFSET = 512; // 150 degrees in motor position
-  constexpr const char *kEndeffectorHardware = "EndeffectorHardware";
-
-  CallbackReturn EndeffectorHardware::on_init(const hardware_interface::HardwareInfo &info)
+  hardware_interface::CallbackReturn EndeffectorHardware::on_init(const hardware_interface::HardwareInfo &info)
   {
-    RCLCPP_DEBUG(rclcpp::get_logger(kEndeffectorHardware), "configure");
-    if (hardware_interface::SystemInterface::on_init(info) != CallbackReturn::SUCCESS)
+    if (hardware_interface::SystemInterface::on_init(info) != hardware_interface::CallbackReturn::SUCCESS)
     {
-      return CallbackReturn::ERROR;
+      return hardware_interface::CallbackReturn::ERROR;
     }
-    // Check if we should use dummy mode
-    if (info_.hardware_parameters.find("use_dummy") != info_.hardware_parameters.end() &&
-        info_.hardware_parameters.at("use_dummy") == "true")
-    {
-      use_dummy_ = true;
-      RCLCPP_INFO(rclcpp::get_logger(kEndeffectorHardware), "Dummy mode enabled.");
-      return CallbackReturn::SUCCESS;
-    }
-
-    // Initialize the publisher for raw motor positions
-    // motor_position_publisher_ = rclcpp::Node::make_shared("motor_position_publisher")->create_publisher<std_msgs::msg::Int32MultiArray>("motor_positions", 10);
-    joints_.resize(info_.joints.size(), Joint());
-    servo_ids_.resize(info_.joints.size(), 0);
 
     // Initialize PortHandler instance
-    auto port_name = info_.hardware_parameters.at("usb_port");
-    auto baud_rate = std::stoi(info_.hardware_parameters.at("baud_rate"));
-
-    RCLCPP_INFO(rclcpp::get_logger(kEndeffectorHardware), "usb_port: %s", port_name.c_str());
-    RCLCPP_INFO(rclcpp::get_logger(kEndeffectorHardware), "baud_rate: %d", baud_rate);
+    std::string port_name = info_.hardware_parameters["usb_port"];
+    int baud_rate = std::stoi(info_.hardware_parameters["baud_rate"]);
 
     portHandler_ = dynamixel::PortHandler::getPortHandler(port_name.c_str());
     packetHandler_ = dynamixel::PacketHandler::getPacketHandler(PROTOCOL_VERSION);
-    // dynamixel::GroupSyncWrite groupSyncWrite(portHandler_, packetHandler_, ADDR_GOAL_POSITION, LEN_GOAL_POSITION);
-
-    for (uint i = 0; i < info_.joints.size(); i++)
-    {
-      servo_ids_[i] = std::stoi(info_.joints[i].parameters.at("id"));
-      joints_[i].state.position = std::numeric_limits<double>::quiet_NaN();
-      joints_[i].command.position = std::numeric_limits<double>::quiet_NaN();
-      joints_[i].prev_command.position = joints_[i].command.position;
-      RCLCPP_INFO(rclcpp::get_logger(kEndeffectorHardware), "joint_id %d: %d", i, servo_ids_[i]);
-    }
 
     if (!portHandler_->openPort())
     {
-      RCLCPP_ERROR(rclcpp::get_logger(kEndeffectorHardware), "Failed to open the port!");
-      return CallbackReturn::ERROR;
+      RCLCPP_ERROR(rclcpp::get_logger("EndeffectorHardware"), "Failed to open the port!");
+      return hardware_interface::CallbackReturn::ERROR;
     }
 
     if (!portHandler_->setBaudRate(baud_rate))
     {
-      RCLCPP_ERROR(rclcpp::get_logger(kEndeffectorHardware), "Failed to set the baudrate!");
-      return CallbackReturn::ERROR;
+      RCLCPP_ERROR(rclcpp::get_logger("EndeffectorHardware"), "Failed to set the baudrate!");
+      return hardware_interface::CallbackReturn::ERROR;
     }
 
-    // enable_torque()
-    ///////////////////////////////////////////////////////////
-    return CallbackReturn::SUCCESS;
+    // Create GroupSyncWrite for synchronizing position commands
+    groupSyncWrite_ = new dynamixel::GroupSyncWrite(portHandler_, packetHandler_, ADDR_GOAL_POSITION, 2);
+
+    // Extract joint names and servo IDs
+    for (const auto &joint : info.joints)
+    {
+      joint_names_.push_back(joint.name);
+      uint8_t id = static_cast<uint8_t>(std::stoi(joint.parameters.at("id")));
+      servo_ids_.push_back(id);
+
+      // Initialize position commands and states
+      position_commands_[joint.name] = std::numeric_limits<double>::quiet_NaN();
+      position_states_[joint.name] = std::numeric_limits<double>::quiet_NaN();
+    }
+
+    // Initialize servos
+    if (!initialize_servos())
+    {
+      return hardware_interface::CallbackReturn::ERROR;
+    }
+
+    return hardware_interface::CallbackReturn::SUCCESS;
+  }
+
+  bool EndeffectorHardware::initialize_servos()
+  {
+    for (const auto &id : servo_ids_)
+    {
+      // Ping servo to check connection
+      if (!ping_servo(id))
+      {
+        RCLCPP_ERROR(rclcpp::get_logger("EndeffectorHardware"), "Failed to ping servo ID %d", id);
+        return false;
+      }
+
+      // Enable torque
+      uint8_t dxl_error = 0;
+      int dxl_comm_result = packetHandler_->write1ByteTxRx(portHandler_, id, ADDR_TORQUE_ENABLE, TORQUE_ENABLE, &dxl_error);
+      if (dxl_comm_result != COMM_SUCCESS)
+      {
+        RCLCPP_ERROR(rclcpp::get_logger("EndeffectorHardware"), "Failed to enable torque for ID %d: %s", id, packetHandler_->getTxRxResult(dxl_comm_result));
+        return false;
+      }
+      else if (dxl_error != 0)
+      {
+        RCLCPP_ERROR(rclcpp::get_logger("EndeffectorHardware"), "Error enabling torque for ID %d: %s", id, packetHandler_->getRxPacketError(dxl_error));
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool EndeffectorHardware::ping_servo(uint8_t id)
+  {
+    uint16_t model_number = 0;
+    uint8_t dxl_error = 0;
+    int dxl_comm_result = packetHandler_->ping(portHandler_, id, &model_number, &dxl_error);
+    if (dxl_comm_result != COMM_SUCCESS)
+    {
+      RCLCPP_ERROR(rclcpp::get_logger("EndeffectorHardware"), "Failed to ping ID %d: %s", id, packetHandler_->getTxRxResult(dxl_comm_result));
+      return false;
+    }
+    else if (dxl_error != 0)
+    {
+      RCLCPP_ERROR(rclcpp::get_logger("EndeffectorHardware"), "Error pinging ID %d: %s", id, packetHandler_->getRxPacketError(dxl_error));
+      return false;
+    }
+    else
+    {
+      RCLCPP_INFO(rclcpp::get_logger("EndeffectorHardware"), "Found Dynamixel ID %d, Model Number %d", id, model_number);
+      return true;
+    }
   }
 
   std::vector<hardware_interface::StateInterface> EndeffectorHardware::export_state_interfaces()
   {
     std::vector<hardware_interface::StateInterface> state_interfaces;
 
-    for (uint i = 0; i < info_.joints.size(); i++)
+    for (const auto &joint_name : joint_names_)
     {
-      state_interfaces.emplace_back(hardware_interface::StateInterface(info_.joints[i].name, hardware_interface::HW_IF_POSITION, &joints_[i].state.position));
-      // state_interfaces.emplace_back(hardware_interface::StateInterface(joint_name, hardware_interface::HW_IF_VELOCITY, &velocity_states_[joint_name]));
+      state_interfaces.emplace_back(hardware_interface::StateInterface(joint_name, hardware_interface::HW_IF_POSITION, &position_states_[joint_name]));
     }
 
     return state_interfaces;
@@ -112,200 +144,137 @@ namespace endeffector_hardware
   {
     std::vector<hardware_interface::CommandInterface> command_interfaces;
 
-    for (uint i = 0; i < info_.joints.size(); i++)
+    for (const auto &joint_name : joint_names_)
     {
-      command_interfaces.emplace_back(hardware_interface::CommandInterface(info_.joints[i].name, hardware_interface::HW_IF_POSITION, &joints_[i].command.position));
-      // command_interfaces.emplace_back(hardware_interface::CommandInterface(joint_name, hardware_interface::HW_IF_VELOCITY, &velocity_commands_[joint_name]));
+      command_interfaces.emplace_back(hardware_interface::CommandInterface(joint_name, hardware_interface::HW_IF_POSITION, &position_commands_[joint_name]));
     }
 
     return command_interfaces;
   }
 
-  CallbackReturn EndeffectorHardware::on_activate(const rclcpp_lifecycle::State & /*previous_state*/)
+  hardware_interface::CallbackReturn EndeffectorHardware::on_activate(const rclcpp_lifecycle::State & /*previous_state*/)
   {
-    RCLCPP_DEBUG(rclcpp::get_logger(kEndeffectorHardware), "start");
-    for (uint i = 0; i < joints_.size(); i++)
+    // Initialize position commands to current positions
+    for (size_t i = 0; i < joint_names_.size(); ++i)
     {
-      if (use_dummy_ && std::isnan(joints_[i].state.position))
+      auto id = servo_ids_[i];
+      auto joint_name = joint_names_[i];
+      int32_t dxl_present_position = read_position(id);
+      if (dxl_present_position == -1)
       {
-        joints_[i].state.position = 0.0;
+        return hardware_interface::CallbackReturn::ERROR;
       }
-    }
-    read(rclcpp::Time{}, rclcpp::Duration(0, 0));
-    reset_command();
-    write(rclcpp::Time{}, rclcpp::Duration(0, 0));
 
-    return CallbackReturn::SUCCESS;
-  }
+      double position = static_cast<double>(dxl_present_position) * (DXL_MAX_ANGLE - DXL_MIN_ANGLE) / (DXL_MAX_POSITION_VALUE - DXL_MIN_POSITION_VALUE) + DXL_MIN_ANGLE;
 
-  CallbackReturn EndeffectorHardware::on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/)
-  {
-    if (!use_dummy_)
-    {
-      // Disable torque
-      for (const auto &id : servo_ids_)
-      {
-        uint8_t dxl_error = 0;
-        int dxl_comm_result = packetHandler_->write1ByteTxRx(portHandler_, id, ADDR_TORQUE_ENABLE, TORQUE_DISABLE, &dxl_error);
-        if (dxl_comm_result != COMM_SUCCESS)
-        {
-          RCLCPP_ERROR(rclcpp::get_logger("EndeffectorHardware"), "Failed to disable torque for ID %d: %s", id, packetHandler_->getTxRxResult(dxl_comm_result));
-        }
-        else if (dxl_error != 0)
-        {
-          RCLCPP_ERROR(rclcpp::get_logger("EndeffectorHardware"), "Error disabling torque for ID %d: %s", id, packetHandler_->getRxPacketError(dxl_error));
-        }
-      }
+      position_states_[joint_name] = position;
+      position_commands_[joint_name] = position;
     }
 
-    return CallbackReturn::SUCCESS;
+    return hardware_interface::CallbackReturn::SUCCESS;
   }
 
-  return_type EndeffectorHardware::enable_torque(const bool enabled)
+  hardware_interface::CallbackReturn EndeffectorHardware::on_deactivate(const rclcpp_lifecycle::State & /*previous_state*/)
   {
+    // Disable torque
     for (const auto &id : servo_ids_)
     {
-
-      // Enable torque
       uint8_t dxl_error = 0;
-      int dxl_comm_result = packetHandler_->write1ByteTxRx(portHandler_, id, ADDR_TORQUE_ENABLE, TORQUE_ENABLE, &dxl_error);
+      int dxl_comm_result = packetHandler_->write1ByteTxRx(portHandler_, id, ADDR_TORQUE_ENABLE, TORQUE_DISABLE, &dxl_error);
       if (dxl_comm_result != COMM_SUCCESS)
       {
-        RCLCPP_ERROR(rclcpp::get_logger(kEndeffectorHardware), "Failed to enable torque for ID %d: %s", id, packetHandler_->getTxRxResult(dxl_comm_result));
-        return return_type::ERROR;
+        RCLCPP_ERROR(rclcpp::get_logger("EndeffectorHardware"), "Failed to disable torque for ID %d: %s", id, packetHandler_->getTxRxResult(dxl_comm_result));
       }
       else if (dxl_error != 0)
       {
-        RCLCPP_ERROR(rclcpp::get_logger(kEndeffectorHardware), "Error enabling torque for ID %d: %s", id, packetHandler_->getRxPacketError(dxl_error));
-        return return_type::ERROR;
+        RCLCPP_ERROR(rclcpp::get_logger("EndeffectorHardware"), "Error disabling torque for ID %d: %s", id, packetHandler_->getRxPacketError(dxl_error));
       }
     }
-    return return_type::OK;
+    return hardware_interface::CallbackReturn::SUCCESS;
   }
 
-  return_type EndeffectorHardware::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
+  hardware_interface::return_type EndeffectorHardware::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
   {
-    if (use_dummy_)
+    for (size_t i = 0; i < joint_names_.size(); ++i)
     {
-      return return_type::OK;
-    }
-    dynamixel::GroupBulkRead groupBulkRead(portHandler_, packetHandler_);
+      auto id = servo_ids_[i];
+      auto joint_name = joint_names_[i];
 
-    bool dxl_addparam_result = false;
-
-    // std_msgs::msg::Int32MultiArray motor_positions_msg;
-    for (size_t i = 0; i < joints_.size(); ++i)
-    {
-
-      dxl_addparam_result = groupBulkRead.addParam(servo_ids_[i], ADDR_PRESENT_POSITION, LEN_PRESENT_POSITION);
-      if (dxl_addparam_result != true)
+      int32_t dxl_present_position = read_position(id);
+      if (dxl_present_position == -1)
       {
-        RCLCPP_ERROR(rclcpp::get_logger(kEndeffectorHardware), "Error adding paramater for ID %d:", servo_ids_[i]);
-        return return_type::ERROR;
+        return hardware_interface::return_type::ERROR;
       }
-      joints_[i].state.position = groupBulkRead.getData(servo_ids_[i], ADDR_PRESENT_POSITION, LEN_PRESENT_POSITION);
+
+      double position = static_cast<double>(dxl_present_position) * (DXL_MAX_ANGLE - DXL_MIN_ANGLE) / (DXL_MAX_POSITION_VALUE - DXL_MIN_POSITION_VALUE) + DXL_MIN_ANGLE;
+
+      position_states_[joint_name] = position;
     }
 
-    // motor_position_publisher_->publish(motor_positions_msg);
-    return return_type::OK;
+    return hardware_interface::return_type::OK;
   }
 
-  return_type EndeffectorHardware::write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
+  int32_t EndeffectorHardware::read_position(uint8_t id)
   {
-    if (use_dummy_)
+    uint8_t dxl_error = 0;
+    uint16_t dxl_present_position = 0;
+    int dxl_comm_result = packetHandler_->read2ByteTxRx(portHandler_, id, ADDR_PRESENT_POSITION, &dxl_present_position, &dxl_error);
+    if (dxl_comm_result != COMM_SUCCESS)
     {
-      for (auto &joint : joints_)
-      {
-        joint.prev_command.position = joint.command.position;
-        joint.state.position = joint.command.position;
-      }
-      return return_type::OK;
+      RCLCPP_ERROR(rclcpp::get_logger("EndeffectorHardware"), "Failed to read position for ID %d: %s", id, packetHandler_->getTxRxResult(dxl_comm_result));
+      return -1;
     }
-    dynamixel::GroupSyncWrite groupSyncWrite(portHandler_, packetHandler_, ADDR_GOAL_POSITION, LEN_GOAL_POSITION);
-    std::vector<int32_t> commands(info_.joints.size(), 0);
-    std::vector<uint8_t> ids(info_.joints.size(), 0);
-    bool dxl_addparam_result = false; // addParam result
-    std::copy(servo_ids_.begin(), servo_ids_.end(), ids.begin());
-    for (uint i = 0; i < ids.size(); i++)
+    else if (dxl_error != 0)
     {
-      joints_[i].prev_command.position = joints_[i].command.position;
-      commands[i] = static_cast<float>(joints_[i].command.position);
-      RCLCPP_INFO(rclcpp::get_logger("EndeffectorHardware"), "Publishing joints %f", joints_[i].command.position);
-      dxl_addparam_result = groupSyncWrite.addParam(servo_ids_[i], 0);
-      if (dxl_addparam_result != true)
-      {
-        fprintf(stderr, "[ID:%03d] groupSyncWrite addparam failed", servo_ids_[i]);
-        return return_type::ERROR;
-      }
+      RCLCPP_ERROR(rclcpp::get_logger("EndeffectorHardware"), "Error reading position for ID %d: %s", id, packetHandler_->getRxPacketError(dxl_error));
+      return -1;
     }
-    if (!groupSyncWrite.txPacket())
-    {
-      RCLCPP_ERROR(rclcpp::get_logger(kEndeffectorHardware), "7 ");
-    }
-    groupSyncWrite.clearParam();
-    return return_type::OK;
+
+    return dxl_present_position;
   }
 
-  return_type EndeffectorHardware::reset_command()
+  hardware_interface::return_type EndeffectorHardware::write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
   {
-    for (uint i = 0; i < joints_.size(); i++)
+
+    for (size_t i = 0; i < joint_names_.size(); ++i)
     {
-      joints_[i].command.position = joints_[i].state.position;
-      joints_[i].prev_command.position = joints_[i].command.position;
+      auto id = servo_ids_[i];
+      auto joint_name = joint_names_[i];
+
+      double command_position = position_commands_[joint_name];
+
+      // Convert the command position from radians to Dynamixel position value
+      int32_t dxl_goal_position = static_cast<int32_t>((command_position - DXL_MIN_ANGLE) * (DXL_MAX_POSITION_VALUE - DXL_MIN_POSITION_VALUE) / (DXL_MAX_ANGLE - DXL_MIN_ANGLE));
+      // RCLCPP_INFO(rclcpp::get_logger("EndeffectorHardware"), "Position for dynamixel ID %d, position %d", id, dxl_goal_position);
+      // Clamp the position value within the valid range
+      dxl_goal_position = std::max(DXL_MIN_POSITION_VALUE, std::min(DXL_MAX_POSITION_VALUE, dxl_goal_position));
+      // RCLCPP_INFO(rclcpp::get_logger("EndeffectorHardware"), "Position for dynamixel ID %d, position %d", id, dxl_goal_position);
+      uint8_t param_goal_position[2];
+      param_goal_position[0] = DXL_LOBYTE(dxl_goal_position);
+      param_goal_position[1] = DXL_HIBYTE(dxl_goal_position);
+
+      // Add to sync write
+      if (!groupSyncWrite_->addParam(id, param_goal_position))
+      {
+        RCLCPP_ERROR(rclcpp::get_logger("EndeffectorHardware"), "Failed to add servo ID %d to Sync Write", id);
+        return hardware_interface::return_type::ERROR;
+      }
     }
 
-    return return_type::OK;
+    // Transmit the sync write packet to all servos
+
+    // auto x = groupSyncWrite_->txPacket();
+    if (groupSyncWrite_->txPacket() != COMM_SUCCESS)
+    {
+      // RCLCPP_ERROR(rclcpp::get_logger("EndeffectorHardware"), "Sync Write failed");
+      RCLCPP_ERROR(rclcpp::get_logger("EndeffectorHardware"), "Sync Write failed");
+      return hardware_interface::return_type::ERROR;
+    }
+    groupSyncWrite_->clearParam();
+    return hardware_interface::return_type::OK;
   }
-  // bool EndeffectorHardware::write_position(uint8_t id, int32_t position)
-  // {
-  //   if (use_dummy_)
-  //   {
-  //     RCLCPP_INFO(rclcpp::get_logger("EndeffectorHardware"), "Simulating position write for ID %d (dummy mode)", id);
-  //     return true;
-  //   }
-
-  //   uint8_t dxl_error = 0;
-  //   int dxl_comm_result = packetHandler_->write2ByteTxRx(portHandler_, id, ADDR_GOAL_POSITION, static_cast<uint16_t>(position), &dxl_error);
-  //   if (dxl_comm_result != COMM_SUCCESS)
-  //   {
-  //     RCLCPP_ERROR(rclcpp::get_logger("EndeffectorHardware"), "Failed to write position for ID %d: %s", id, packetHandler_->getTxRxResult(dxl_comm_result));
-  //     return false;
-  //   }
-  //   else if (dxl_error != 0)
-  //   {
-  //     RCLCPP_ERROR(rclcpp::get_logger("EndeffectorHardware"), "Error writing position for ID %d: %s", id, packetHandler_->getRxPacketError(dxl_error));
-  //     return false;
-  //   }
-
-  //   return true;
-  // }
-  // void EndeffectorHardware::calibrate_servos()
-  // {
-  //   for (size_t i = 0; i < joints_.size(); ++i)
-  //   {
-  //     auto id = servo_ids_[i];
-
-  //     // Move to max position (1023)
-  //     RCLCPP_INFO(rclcpp::get_logger("EndeffectorHardware"), "Moving servo ID %d to max position", id);
-  //     write_position(id, DXL_MAX_POSITION_VALUE);
-  //     rclcpp::sleep_for(std::chrono::seconds(1)); // Delay for movement
-
-  //     // Move to min position (0)
-  //     RCLCPP_INFO(rclcpp::get_logger("EndeffectorHardware"), "Moving servo ID %d to min position", id);
-  //     write_position(id, DXL_MIN_POSITION_VALUE);
-  //     rclcpp::sleep_for(std::chrono::seconds(1)); // Delay for movement
-
-  //     // Move to center position (512)
-  //     RCLCPP_INFO(rclcpp::get_logger("EndeffectorHardware"), "Centering servo ID %d at position 512", id);
-  //     write_position(id, DXL_MOTOR_POSITION_OFFSET);
-  //     rclcpp::sleep_for(std::chrono::seconds(1)); // Delay for movement
-  //   }
-
-  //   RCLCPP_INFO(rclcpp::get_logger("EndeffectorHardware"), "Servo calibration completed.");
-  // }
 
 } // namespace endeffector_hardware
 
 #include "pluginlib/class_list_macros.hpp"
-
 PLUGINLIB_EXPORT_CLASS(endeffector_hardware::EndeffectorHardware, hardware_interface::SystemInterface)

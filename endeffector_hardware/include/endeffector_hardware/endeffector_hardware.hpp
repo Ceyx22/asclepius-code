@@ -22,19 +22,19 @@ using hardware_interface::return_type;
 
 namespace endeffector_hardware
 {
-  struct JointValue
-  {
-    double position{0.0};
-    double velocity{0.0};
-    double effort{0.0};
-  };
+  // struct JointValue
+  // {
+  //   double position{0.0};
+  //   double velocity{0.0};
+  //   double effort{0.0};
+  // };
 
-  struct Joint
-  {
-    JointValue state{};
-    JointValue command{};
-    JointValue prev_command{};
-  };
+  // struct Joint
+  // {
+  //   JointValue state{};
+  //   JointValue command{};
+  //   JointValue prev_command{};
+  // };
 
   class EndeffectorHardware : public hardware_interface::SystemInterface
   {
@@ -67,24 +67,26 @@ namespace endeffector_hardware
     return_type reset_command();
 
     // Helper functions
-    // bool initialize_servos();
-    // bool ping_servo(uint8_t id);
+    bool initialize_servos();
+    bool ping_servo(uint8_t id);
     // CallbackReturn set_joint_positions();
 
-    // int32_t read_position(uint8_t id);
-    // bool write_position(uint8_t id, int32_t position);
-    // void calibrate_servos();
+    int32_t read_position(uint8_t id);
+    bool write_position(uint8_t id, int32_t position);
+    void calibrate_servos();
 
     // Dynamixel SDK members
     dynamixel::PortHandler *portHandler_;
     dynamixel::PacketHandler *packetHandler_;
-    // dynamixel::GroupSyncWrite *groupSync_;
+    dynamixel::GroupBulkRead *groupBulkRead_;
+    // dynamixel::GroupBulkWrite *groupBulkWrite_;
+    dynamixel::GroupSyncWrite *groupSyncWrite_;
 
     // Servo IDs and joint names
     std::vector<uint8_t> servo_ids_;
-    std::vector<Joint> joints_;
+    // std::vector<Joint> joints_;
 
-    // std::vector<std::string> joint_names_;
+    std::vector<std::string> joint_names_;
 
     // Joint state and command variables
     std::unordered_map<std::string, double> position_commands_;

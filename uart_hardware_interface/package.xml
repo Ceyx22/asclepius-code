@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>uart_hardware_interface</name>
+  <version>0.1.0</version>
+  <description>UART Hardware Interface for ros2_control</description>
+
+  <maintainer email="fm278841@gmail.com">Your Name</maintainer>
+
+  <license>Apache License 2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>hardware_interface</depend>
+  <depend>pluginlib</depend>
+  <depend>rclcpp_lifecycle</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+    <hardware_interface plugin="${prefix}/share/uart_hardware_interface/uart_hardware_interface_plugin.xml"/>
+  </export>
+</package>

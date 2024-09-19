@@ -32,9 +32,6 @@ def generate_launch_description():
     doc = xacro.parse(open(xacro_file))
     xacro.process_doc(doc)
     params = {'robot_description': doc.toxml()}
-
-
-
     controller_config = os.path.join(
         project_path, "config", "robot_controller.yaml"
     )
@@ -65,7 +62,7 @@ def generate_launch_description():
         Node(
             package="controller_manager",
             executable="spawner",
-            arguments=["joint_trajectory_controller", "-c", "/controller_manager"],
+            arguments=["joint_trajectory_controller", "--controller-manager", "/controller_manager"],
             output="screen",
         ),
 
