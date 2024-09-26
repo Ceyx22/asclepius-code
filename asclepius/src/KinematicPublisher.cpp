@@ -190,6 +190,7 @@ private:
     void feedbackCallback(GoalHandleFollowJointTrajectory::SharedPtr,
                           const std::shared_ptr<const FollowJointTrajectory::Feedback> feedback)
     {
+        // RCLCPP_INFO(this->get_logger(), feedback);
         // You can process feedback here if needed
         RCLCPP_INFO(this->get_logger(), "Received feedback");
     }

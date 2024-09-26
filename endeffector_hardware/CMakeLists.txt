@@ -3,7 +3,7 @@ project(endeffector_hardware)
 
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 
 # Find dependencies
@@ -22,6 +22,8 @@ include_directories(
 # Add library
 add_library(${PROJECT_NAME} SHARED
   src/endeffector_hardware.cpp
+  src/motor.cpp
+  src/comms.cpp
 )
 target_include_directories(
   ${PROJECT_NAME}
@@ -35,7 +37,7 @@ ament_target_dependencies(${PROJECT_NAME}
   rclcpp
   dynamixel_sdk
 )
-
+# target_compile_features(dynamixel_hw PUBLIC cxx_std_17)
 ament_export_include_directories(
   include
 )

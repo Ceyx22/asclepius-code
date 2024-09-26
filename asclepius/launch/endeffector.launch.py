@@ -42,6 +42,9 @@ def generate_launch_description():
             executable="ros2_control_node",
             parameters=[
                 params, controller_config],
+            # prefix=['xterm -e gdb -ex run --args'],
+            # prefix=['gdbserver localhost:3000'],
+            arguments=['--ros-args', '--log-level', 'DEBUG'],
             output="screen",
         ),
 

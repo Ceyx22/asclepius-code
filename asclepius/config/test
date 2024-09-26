@@ -135,3 +135,4 @@ ros2 action send_goal /joint_trajectory_controller/follow_joint_trajectory contr
   ros2 control switch_controllers --activate joint_state_broadcaster --activate joint_trajectory_controller 
 
   ros2 topic echo /motor_positions
+  source /opt/ros/humble/setup.zsh; colcon build --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo; source install/setup.zsh

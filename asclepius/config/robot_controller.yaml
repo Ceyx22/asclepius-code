@@ -1,12 +1,25 @@
 controller_manager:
   ros__parameters:
-    update_rate: 100  # Hz
+    update_rate: 20  # Hz
 
     joint_trajectory_controller:
       type: joint_trajectory_controller/JointTrajectoryController
+    # velocity_controller:
+    #   type: velocity_controllers/JointGroupVelocityController
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
+
+# velocity_controller:
+#   ros__parameters:
+#     joints:
+#       - joint1
+#       - joint2
+#       - joint3
+#       - joint4
+#       - joint5
+#       - joint6
+#       - joint7
 
 joint_trajectory_controller:
   ros__parameters:
@@ -24,6 +37,8 @@ joint_trajectory_controller:
 
     state_interfaces:
       - position
-      # - velocity
+      - velocity
+    state_publish_rate: 20.0
+    action_monitor_rate: 20.0
 
 

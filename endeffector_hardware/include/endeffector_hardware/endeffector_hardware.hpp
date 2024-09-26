@@ -15,6 +15,8 @@
 #include "dynamixel_sdk/dynamixel_sdk.h"
 
 #include "endeffector_hardware/visiblity_control.h"
+#include "endeffector_hardware/comms.hpp"
+#include "endeffector_hardware/motor.hpp"
 #include "rclcpp/macros.hpp"
 
 using hardware_interface::CallbackReturn;
@@ -22,22 +24,16 @@ using hardware_interface::return_type;
 
 namespace endeffector_hardware
 {
-  // struct JointValue
-  // {
-  //   double position{0.0};
-  //   double velocity{0.0};
-  //   // double effort{0.0};
-  // };
-
-  // struct Joint
-  // {
-  //   JointValue state{};
-  //   JointValue command{};
-  //   JointValue prev_command{};
-  // };
 
   class EndeffectorHardware : public hardware_interface::SystemInterface
   {
+    struct Config
+    {
+      // std::vector<std::string> motor_names;
+      std::string usb_port = "";
+      int baud_rate = 0;
+    };
+
   public:
     RCLCPP_SHARED_PTR_DEFINITIONS(EndeffectorHardware)
 
@@ -63,33 +59,14 @@ namespace endeffector_hardware
     return_type write(const rclcpp::Time &time, const rclcpp::Duration &period) override;
 
   private:
-    return_type enable_torque(const bool enabled);
-    return_type ping_servo(uint8_t id);
-    return_type initialize_servos();
+    endeffector_hardware::Comms dynamixel_connection_;
 
-    return_type reset_command();
-    int32_t addToWrite(uint8_t id, double command_position);
-    int32_t rad_to_pos(uint8_t id, double command_position);
-    int32_t pos_to_rad(double position);
+    std::vector<endeffector_hardware::Motor> endeffector;
+    // endeffector_hardware::Motor motor_joint;
 
-    int32_t read_param(uint8_t id, uint16_t address);
+    // std::vector<std::string> motor_names;
 
-    // Dynamixel SDK members
-    dynamixel::PortHandler *portHandler_;
-    dynamixel::PacketHandler *packetHandler_;
-    dynamixel::GroupSyncWrite *groupSyncWrite_;
-
-    // Servo IDs and joint names
-    std::vector<uint8_t> servo_ids_;
-    std::vector<std::string> joint_names_;
-    // std::vector<Joint> joints_;
-    // std::unordered_map<std::string, double> position_commands_;
-    // Joint state and command variables
-    std::unordered_map<std::string, double> position_commands_;
-    std::unordered_map<std::string, double> position_states_;
-    std::unordered_map<std::string, double> velocity_states_;
-
-    // rclcpp::Publisher<std_msgs::msg::Int32MultiArray>::SharedPtr motor_position_publisher_;
+    Config config_;
   };
 
 } // namespace ENDEFFECTOR_HARDWARE_interface
