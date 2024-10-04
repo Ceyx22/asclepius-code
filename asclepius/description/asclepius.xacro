@@ -398,5 +398,6 @@
     <axis
       xyz="0 0 -1" />
   </joint>
+  <!-- <link name="tool0"/> -->
   </xacro:macro>
 </robot>

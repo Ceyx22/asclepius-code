@@ -1,0 +1,7 @@
+<library path="endeffector_controller">
+  <class name="endeffector_controller/EndeffectorController" type="endeffector_controller::EndeffectorController"  base_class_type="controller_interface::ControllerInterface">
+    <description>
+      Endeffector Controller for Surgical Robot
+    </description>
+  </class>
+</library>

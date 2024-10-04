@@ -33,8 +33,11 @@ find_package(trajectory_msgs REQUIRED)
 include_directories(include)
 # add_executable(ik src/KDLInverseKinematicsNode.cpp)
 add_executable(kinPub src/KinematicPublisher.cpp)
+add_executable(send_trajectory src/send_trajectory.cpp)
 # ament_target_dependencies(ik rclcpp geometry_msgs urdf kdl_parser std_msgs trajectory_msgs control_msgs rclcpp_action tf2_kdl tf2_geometry_msgs)
 ament_target_dependencies(kinPub rclcpp geometry_msgs urdf kdl_parser std_msgs sensor_msgs trajectory_msgs control_msgs rclcpp_action)
+ament_target_dependencies(send_trajectory rclcpp urdf kdl_parser trajectory_msgs)
+
 
 
 install(DIRECTORY
@@ -50,6 +53,7 @@ install(DIRECTORY
 # Install nodes
 install(TARGETS
   kinPub
+  send_trajectory
   DESTINATION lib/${PROJECT_NAME}
   )
   

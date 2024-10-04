@@ -40,42 +40,46 @@ def generate_launch_description():
         Node(
             package="controller_manager",
             executable="ros2_control_node",
-            parameters=[
-                params, controller_config],
+            parameters=[params, controller_config],
             # prefix=['xterm -e gdb -ex run --args'],
             # prefix=['gdbserver localhost:3000'],
             arguments=['--ros-args', '--log-level', 'DEBUG'],
-            output="screen",
+            remappings=[("~/robot_description", "/robot_description"),],
+            output="both",
         ),
 
         Node(
             package="controller_manager",
             executable="spawner",
             arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
-            output="screen",
+            output="both",
         ),
-
         Node(
             package="controller_manager",
             executable="spawner",
-            arguments=["velocity_controller", "--controller-manager", "/controller_manager"],
-            output="screen",
+            arguments=["robot_controller", "-c", "/controller_manager"],
         ),
 
-        Node(
-            package="controller_manager",
-            executable="spawner",
-            arguments=["joint_trajectory_controller", "--controller-manager", "/controller_manager"],
-            output="screen",
-        ),
+        # Node(
+        #     package="controller_manager",
+        #     executable="spawner",
+        #     arguments=["velocity_controller", "--controller-manager", "/controller_manager"],
+        #     output="screen",
+        # ),
+
+        # Node(
+        #     package="controller_manager",
+        #     executable="spawner",
+        #     arguments=["joint_trajectory_controller", "--controller-manager", "/controller_manager"],
+        #     output="screen",
+        # ),
 
         Node(
             package="robot_state_publisher",
             executable="robot_state_publisher",
             name="robot_state_publisher",
-            parameters=[
-                params],
-            output="screen",
+            parameters=[params],
+            output="both",
         ),
         Node(
             package="rviz2",
