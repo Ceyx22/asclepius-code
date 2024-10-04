@@ -77,6 +77,19 @@ namespace endeffector_hardware
         return true;
     };
 
+    bool Comms::read1ByteTxRx(uint8_t dynamixel_id, uint16_t address, uint8_t *data)
+    {
+        dxl_comm_result = packetHandler_->read1ByteTxRx(portHandler_, dynamixel_id, address, data, &dxl_error);
+
+        if (dxl_comm_result != COMM_SUCCESS)
+        {
+            RCLCPP_ERROR(rclcpp::get_logger(LOGGER_IDENTIFIER), "Failed to read 2 bytes.");
+            return false;
+        }
+
+        return true;
+    };
+
     void Comms::disconnect()
     {
         portHandler_->closePort();

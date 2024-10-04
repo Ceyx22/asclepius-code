@@ -5,6 +5,7 @@
 #include <vector>
 #include <unordered_map>
 #include <std_msgs/msg/int32_multi_array.hpp>
+#include <std_msgs/msg/float64_multi_array.hpp>
 
 #include "rclcpp/rclcpp.hpp"
 #include "hardware_interface/system_interface.hpp"
@@ -63,6 +64,8 @@ namespace endeffector_hardware
 
     std::vector<endeffector_hardware::Motor> endeffector;
     // endeffector_hardware::Motor motor_joint;
+    rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr motor_pos_publisher;
+    rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr motor_vel_publisher;
 
     // std::vector<std::string> motor_names;
 

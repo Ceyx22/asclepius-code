@@ -4,22 +4,22 @@ controller_manager:
 
     joint_trajectory_controller:
       type: joint_trajectory_controller/JointTrajectoryController
-    # velocity_controller:
-    #   type: velocity_controllers/JointGroupVelocityController
+    velocity_controller:
+      type: velocity_controllers/JointGroupVelocityController
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-# velocity_controller:
-#   ros__parameters:
-#     joints:
-#       - joint1
-#       - joint2
-#       - joint3
-#       - joint4
-#       - joint5
-#       - joint6
-#       - joint7
+velocity_controller:
+  ros__parameters:
+    joints:
+      - joint1
+      - joint2
+      - joint3
+      - joint4
+      - joint5
+      - joint6
+      - joint7
 
 joint_trajectory_controller:
   ros__parameters:
@@ -34,10 +34,12 @@ joint_trajectory_controller:
 
     command_interfaces:
       - position
+      - velocity
 
     state_interfaces:
       - position
       - velocity
+      
     state_publish_rate: 20.0
     action_monitor_rate: 20.0
 

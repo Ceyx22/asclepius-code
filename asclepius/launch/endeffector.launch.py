@@ -55,12 +55,12 @@ def generate_launch_description():
             output="screen",
         ),
 
-        # Node(
-        #     package="controller_manager",
-        #     executable="spawner",
-        #     arguments=["velocity_controller", "-c", "/controller_manager"],
-        #     output="screen",
-        # ),
+        Node(
+            package="controller_manager",
+            executable="spawner",
+            arguments=["velocity_controller", "--controller-manager", "/controller_manager"],
+            output="screen",
+        ),
 
         Node(
             package="controller_manager",

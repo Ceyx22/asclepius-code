@@ -24,6 +24,7 @@ namespace endeffector_hardware
         bool write2ByteTxRx(uint8_t dynamixel_id, uint16_t address, uint16_t value);
         bool write1ByteTxRx(uint8_t dynamixel_id, uint16_t address, uint8_t value);
         bool read2ByteTxRx(uint8_t dynamixel_id, uint16_t address, uint16_t *data);
+        bool read1ByteTxRx(uint8_t dynamixel_id, uint16_t address, uint8_t *data);
 
     private:
         dynamixel::PortHandler *portHandler_;

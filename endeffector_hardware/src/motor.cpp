@@ -2,6 +2,7 @@
 #include <string>
 #include <algorithm>
 #include <iostream>
+#include <math.h>
 
 #include "endeffector_hardware/comms.hpp"
 #include "endeffector_hardware/motor.hpp"
@@ -54,19 +55,25 @@
 #define DXL_MOTOR_POSITION_OFFSET 512
 #define DXL_MAX_POSITION_VALUE 1023
 #define DXL_MIN_POSITION_VALUE 0
-#define DXL_MAX_ANGLE 300
-#define DXL_MIN_ANGLE 0
+// #define DXL_MAX_ANGLE 300
+// #define DXL_MIN_ANGLE 0
 #define LOGGER_IDENTIFIER "endeffector_hardware > motor"
 
 const double SPEED_CONVERSION_FACTOR = MAX_MOVING_SPEED_VALUE / (MAX_REV_PER_MIN * 2 * M_PI / 60.0);
+const double DXL_RAD_MAX = 5.236;
+const double DXL_RAD_MIDDLE_MAX = 2.618;
+
+const double DXL_RAD_MIN = 0.0;
+const double DXL_RPM_UNIT = 0.111;
+const double RPM_TO_RAD_PER_SEC = 2 * M_PI / 60.0;
+const double RAD_PER_SEC_TO_RPM = 60.0 / (2 * M_PI);
 
 namespace endeffector_hardware
 {
     void Motor::init(const std::string name, const uint8_t motor_id)
     {
-        this->name = name;
-        this->motor_id_ = motor_id;
-        // this->inverted_ = is_inverted ? -1 : 1;
+        motor_name = name;
+        motor_id_ = motor_id;
 
         RCLCPP_INFO(rclcpp::get_logger(LOGGER_IDENTIFIER), "JOINT: %s ", name.c_str());
     }
@@ -79,15 +86,16 @@ namespace endeffector_hardware
 
         // Enable Torque of DYNAMIXEL
         is_success = connection_.write1ByteTxRx(motor_id_, ADDR_TORQUE_ENABLE, 1);
+
+        // RCLCPP_INFO(rclcpp::get_logger(LOGGER_IDENTIFIER), "Zeroing....");
+
         if (!is_success)
         {
             RCLCPP_ERROR(rclcpp::get_logger(LOGGER_IDENTIFIER), "Failed to enable torque.");
             return false;
         }
-        else
-        {
-            RCLCPP_INFO(rclcpp::get_logger(LOGGER_IDENTIFIER), "Succeeded to enable torque.");
-        }
+
+        RCLCPP_INFO(rclcpp::get_logger(LOGGER_IDENTIFIER), "Succeeded to enable torque.");
 
         return true;
     }
@@ -106,142 +114,166 @@ namespace endeffector_hardware
         }
     }
 
-    bool Motor::write_velocity(double velocity)
+    // takes in radians
+    // does not have bounding set up
+    bool Motor::write_position(double desired_angle)
     {
 
-        uint16_t cur_dynamixel_vel = convert_to_motor_vel(vel);
-        uint16_t dynamixel_vel = convert_to_motor_vel(velocity);
+        RCLCPP_DEBUG(rclcpp::get_logger(LOGGER_IDENTIFIER), "current_pos: %f, new position: %f", current_motor_angle, desired_angle);
 
-        if (dynamixel_vel != cur_dynamixel_vel)
+        if ((current_motor_angle != desired_angle) && (is_moving() == false))
         {
-            bool is_success = connection_.write2ByteTxRx(motor_id_, ADDR_MOVING_SPEED, dynamixel_vel);
-            if (!is_success)
-            {
-                RCLCPP_ERROR(rclcpp::get_logger(LOGGER_IDENTIFIER), "Failed to set Wheel rotation.");
-                return false;
-            }
-            else
-            {
-                RCLCPP_DEBUG(rclcpp::get_logger(LOGGER_IDENTIFIER), "Succeeded to set Wheel rotation. %u", dynamixel_vel);
-            }
-        }
-
-        vel = convert_to_real_vel(dynamixel_vel);
-
-        RCLCPP_DEBUG(rclcpp::get_logger(LOGGER_IDENTIFIER), "%s: requested=%f executed=%f", name.c_str(), velocity, vel);
-
-        return true;
-    }
-
-    bool Motor::write_position(double position)
-    {
-
-        uint16_t cur_dynamixel_pos = convert_to_motor_pos(pos);
-        uint16_t dynamixel_pos = convert_to_motor_pos(position);
-        RCLCPP_DEBUG(rclcpp::get_logger(LOGGER_IDENTIFIER), "current_pos: %d, new position: %d", cur_dynamixel_pos, dynamixel_pos);
-
-        if (dynamixel_pos != cur_dynamixel_pos)
-        {
-            bool is_success = connection_.write2ByteTxRx(motor_id_, ADDR_GOAL_POSITION, dynamixel_pos);
+            RCLCPP_DEBUG(rclcpp::get_logger(LOGGER_IDENTIFIER), "writing new position: %f", desired_angle);
+            bool is_success = connection_.write2ByteTxRx(motor_id_, ADDR_GOAL_POSITION, rad_2_byte(desired_angle));
             if (!is_success)
             {
                 RCLCPP_ERROR(rclcpp::get_logger(LOGGER_IDENTIFIER), "Failed to set joint position.");
                 return false;
             }
-            else
-            {
-                RCLCPP_DEBUG(rclcpp::get_logger(LOGGER_IDENTIFIER), "Succeeded to set joint position. %u", dynamixel_pos);
-            }
         }
 
-        pos = convert_to_angle(position);
+        return true;
+    }
+    // radains per sec
+    bool Motor::write_speed(double desired_velocity)
+    {
 
-        RCLCPP_DEBUG(rclcpp::get_logger(LOGGER_IDENTIFIER), "%s: requested=%f executed=%f", name.c_str(), position, pos);
+        RCLCPP_DEBUG(rclcpp::get_logger(LOGGER_IDENTIFIER), "current_velocity: %f, new velocity: %f", current_motor_speed, desired_velocity);
+
+        if (current_motor_angle != desired_velocity)
+        {
+            RCLCPP_DEBUG(rclcpp::get_logger(LOGGER_IDENTIFIER), "writing new position: %f", desired_motor_speed);
+            bool is_success = connection_.write2ByteTxRx(motor_id_, ADDR_MOVING_SPEED, rad_2_motor_speed(desired_velocity));
+            if (!is_success)
+            {
+                RCLCPP_ERROR(rclcpp::get_logger(LOGGER_IDENTIFIER), "Failed to set joint position.");
+                return false;
+            }
+        }
 
         return true;
     }
 
-    double Motor::get_velocity()
+    bool Motor::update_velocity()
     {
-        return vel;
-        // uint16_t dynamixel_vel;
 
-        // bool is_success = connection_.read2ByteTxRx(dynamixel_id_, ADDR_PRESENT_SPEED, &dynamixel_vel);
-        // if (!is_success)
-        // {
-        //     RCLCPP_ERROR(rclcpp::get_logger(LOGGER_IDENTIFIER), "Failed to read Wheel rotation.");
-        //     return vel;
-        // }
-        // else
-        // {
-        //     RCLCPP_DEBUG(rclcpp::get_logger(LOGGER_IDENTIFIER), "Succeeded to read Wheel rotation. %u", dynamixel_vel);
-        // }
+        RCLCPP_DEBUG(rclcpp::get_logger(LOGGER_IDENTIFIER), "Reading Motor velocity for id %d", motor_id_);
+        bool is_success = connection_.read2ByteTxRx(motor_id_, ADDR_PRESENT_SPEED, &current_motor_vel_);
+        if (!is_success)
+        {
+            RCLCPP_ERROR(rclcpp::get_logger(LOGGER_IDENTIFIER), "Failed to read Wheel rotation.");
+            return false;
+        }
+        RCLCPP_DEBUG(rclcpp::get_logger(LOGGER_IDENTIFIER), "Updating Velocity to %d", current_motor_vel_);
 
-        // return convert_to_ros_control_vel(dynamixel_vel);
+        current_motor_speed = byte_2_rpm(current_motor_vel_);
+
+        return true;
     }
 
     bool Motor::update_position()
     {
-        uint16_t dynamixel_pos;
-        RCLCPP_DEBUG(rclcpp::get_logger(LOGGER_IDENTIFIER), "Reading position for id %d: ", motor_id_);
-        bool is_success = connection_.read2ByteTxRx(motor_id_, ADDR_PRESENT_SPEED, &dynamixel_pos);
+        RCLCPP_DEBUG(rclcpp::get_logger(LOGGER_IDENTIFIER), "Reading Motor Position for id %d: ", motor_id_);
+        bool is_success = connection_.read2ByteTxRx(motor_id_, ADDR_PRESENT_POSITION, &current_motor_pos_);
         if (!is_success)
         {
-            RCLCPP_ERROR(rclcpp::get_logger(LOGGER_IDENTIFIER), "Failed to read position for id %d: ", motor_id_);
+            RCLCPP_ERROR(rclcpp::get_logger(LOGGER_IDENTIFIER), "Failed to read angle for id %d: ", motor_id_);
             return false;
         }
-        // else
-        // {
-        //     RCLCPP_DEBUG(rclcpp::get_logger(LOGGER_IDENTIFIER), "Succeeded to read position. %u", dynamixel_pos);
-        // }
-        pos = convert_to_angle(dynamixel_pos);
+        current_motor_angle = byte_2_rad(current_motor_pos_);
         return true;
-        // return pos;
     }
 
-    uint16_t Motor::convert_to_motor_vel(double rad_vel)
+    bool Motor::is_moving()
     {
-        int16_t dynamixel_vel = static_cast<int>(std::round(SPEED_CONVERSION_FACTOR * rad_vel));
-        dynamixel_vel = std::clamp(dynamixel_vel, static_cast<int16_t>(-1 * MAX_MOVING_SPEED_VALUE), static_cast<int16_t>(MAX_MOVING_SPEED_VALUE));
-        int16_t dynamixel_value = dynamixel_vel;
 
-        if (std::abs(dynamixel_value) < MIN_MOVING_SPEED_VALUE)
+        bool is_success = connection_.read1ByteTxRx(motor_id_, ADDR_MOVING, &moving_);
+        RCLCPP_DEBUG(rclcpp::get_logger(LOGGER_IDENTIFIER), "Is moving %d", moving_);
+        if (!is_success)
         {
-            dynamixel_value = 0;
+            RCLCPP_ERROR(rclcpp::get_logger(LOGGER_IDENTIFIER), "Failed to read angle for id %d: ", motor_id_);
+            return false;
+        }
+        if (moving_ == 1)
+        {
+            RCLCPP_DEBUG(rclcpp::get_logger(LOGGER_IDENTIFIER), "in if statement for Is moving %d", moving_);
+            return true;
+        }
+        return false;
+    }
+
+    //  Accounting for offset
+    uint16_t Motor::rad_2_byte(double radians)
+    {
+
+        // check to see if radians are within the valid range [-2.618, 2.618]
+        if (radians < -DXL_RAD_MIDDLE_MAX || radians > DXL_RAD_MIDDLE_MAX)
+        {
+            RCLCPP_ERROR(rclcpp::get_logger(LOGGER_IDENTIFIER), "Radians must be in the range [-2.618, 2.618]");
+        }
+        // return (scaledValue + DXL_MOTOR_POSITION_OFFSET) % DXL_MAX_POSITION_VALUE;
+        return static_cast<uint16_t>(round((radians / DXL_RAD_MIDDLE_MAX) * DXL_MOTOR_POSITION_OFFSET + DXL_MOTOR_POSITION_OFFSET));
+    }
+
+    // Accounting for offset
+    double Motor::byte_2_rad(uint16_t byte)
+    {
+
+        if (byte < 0 || byte > DXL_MAX_POSITION_VALUE)
+        {
+            RCLCPP_ERROR(rclcpp::get_logger(LOGGER_IDENTIFIER), "Position must be in the range [0, 1023] for id %d: ", motor_id_);
+            // throw std::out_of_range("Position must be in the range [0, 1023]");
+        }
+        return (static_cast<double>(byte) - DXL_MOTOR_POSITION_OFFSET) * (DXL_RAD_MIDDLE_MAX / DXL_MOTOR_POSITION_OFFSET);
+    }
+
+    double Motor::rad_2_deg(double radians)
+    {
+        return radians * (180.0 / M_PI);
+    }
+    // actually gives radians per sec
+    double Motor::byte_2_rpm(uint16_t byte)
+    {
+        if (byte < 0 || byte > 2047)
+        {
+            RCLCPP_ERROR(rclcpp::get_logger(LOGGER_IDENTIFIER), "Value must be in the range [0, 2047]");
         }
 
-        if (dynamixel_value < 0)
+        double rpm;
+        double rad_per_sec;
+        if (byte >= 0 && byte <= 1023)
         {
-            dynamixel_value = REVERSE_OFFSET - dynamixel_value;
+            // Calculate CCW speed (RPM)
+            rpm = byte * DXL_RPM_UNIT;
+            rad_per_sec = rpm * RPM_TO_RAD_PER_SEC;
+        }
+        else if (byte >= 1024 && byte <= 2047)
+        {
+            // Calculate CW speed (RPM)
+            rpm = (byte - 1024) * DXL_RPM_UNIT;
+            rad_per_sec = rpm * RPM_TO_RAD_PER_SEC;
+        }
+        return rad_per_sec;
+    }
+    uint16_t Motor::rad_2_motor_speed(double rad_per_sec)
+    {
+        if (rad_per_sec < 0)
+        {
+            RCLCPP_ERROR(rclcpp::get_logger(LOGGER_IDENTIFIER), "Radians per second must be non-negative for this range (0-1024)");
         }
 
-        return static_cast<uint16_t>(dynamixel_value);
-    }
+        // Convert radians per second to RPM
+        double rpm = rad_per_sec * RAD_PER_SEC_TO_RPM;
 
-    double Motor::convert_to_real_vel(uint16_t dynamixel_vel)
-    {
-        int16_t dynamixel_value = static_cast<int16_t>(dynamixel_vel);
+        // Convert RPM to motor speed value (in the range 0-1024)
+        int value = static_cast<int>(round(rpm / DXL_RPM_UNIT));
 
-        if (dynamixel_value >= REVERSE_OFFSET)
+        // Ensure the motor speed value does not exceed 1024
+        if (value > 1024)
         {
-            dynamixel_value = REVERSE_OFFSET - dynamixel_value;
+            value = 1024;
         }
 
-        if (std::abs(dynamixel_value) < MIN_MOVING_SPEED_VALUE)
-        {
-            dynamixel_value = 0;
-        }
-
-        return (dynamixel_value) / SPEED_CONVERSION_FACTOR;
+        return value;
     }
-    uint16_t Motor::convert_to_motor_pos(double command_position)
-    {
-        return static_cast<uint16_t>(DXL_MOTOR_POSITION_OFFSET + (command_position * (DXL_MAX_POSITION_VALUE - DXL_MIN_POSITION_VALUE) / (DXL_MAX_ANGLE - DXL_MIN_ANGLE)));
-    }
-
-    double Motor::convert_to_angle(double position)
-    {
-        return static_cast<double>(position - DXL_MOTOR_POSITION_OFFSET) * (DXL_MAX_ANGLE - DXL_MIN_ANGLE) / (DXL_MAX_POSITION_VALUE - DXL_MIN_POSITION_VALUE);
-    }
-
 }

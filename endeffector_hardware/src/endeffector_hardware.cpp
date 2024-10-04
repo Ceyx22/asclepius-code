@@ -20,13 +20,11 @@ namespace endeffector_hardware
     }
     config_.usb_port = info_.hardware_parameters["usb_port"];
     config_.baud_rate = std::stoi(info_.hardware_parameters["baud_rate"]);
-    // endeffector.resize(info_.joints.size(), endeffector_hardware::Motor());
-    // motor_names.resize(info_.joints.size(), 0);
 
     // Extract joint names and servo IDs
     for (const auto &joint : info_.joints)
     {
-      if (joint.command_interfaces.size() != 1)
+      if (joint.command_interfaces.size() != 2)
       {
         RCLCPP_FATAL(
             rclcpp::get_logger(kEndeffectorHardware),
@@ -43,10 +41,14 @@ namespace endeffector_hardware
         return hardware_interface::CallbackReturn::ERROR;
       }
       RCLCPP_DEBUG(rclcpp::get_logger(kEndeffectorHardware), "Added motor: %d", std::stoi(joint.parameters.at("id")));
+
       endeffector_hardware::Motor motor_joint;
       motor_joint.init(joint.name, std::stoi(joint.parameters.at("id")));
       endeffector.push_back(motor_joint);
     }
+
+    motor_pos_publisher = rclcpp::Node::make_shared("motor_position_publisher")->create_publisher<std_msgs::msg::Float64MultiArray>("motor_positions", 10);
+    motor_vel_publisher = rclcpp::Node::make_shared("motor_velocity_publisher")->create_publisher<std_msgs::msg::Float64MultiArray>("motor_velocity", 10);
 
     return CallbackReturn::SUCCESS;
   }
@@ -57,8 +59,8 @@ namespace endeffector_hardware
 
     for (uint i = 0; i < endeffector.size(); i++)
     {
-      state_interfaces.emplace_back(hardware_interface::StateInterface(endeffector[i].name, hardware_interface::HW_IF_POSITION, &endeffector[i].pos));
-      state_interfaces.emplace_back(hardware_interface::StateInterface(endeffector[i].name, hardware_interface::HW_IF_VELOCITY, &endeffector[i].vel));
+      state_interfaces.emplace_back(hardware_interface::StateInterface(endeffector[i].motor_name, hardware_interface::HW_IF_POSITION, &endeffector[i].current_motor_angle));
+      state_interfaces.emplace_back(hardware_interface::StateInterface(endeffector[i].motor_name, hardware_interface::HW_IF_VELOCITY, &endeffector[i].current_motor_speed));
     }
 
     return state_interfaces;
@@ -70,7 +72,8 @@ namespace endeffector_hardware
 
     for (uint i = 0; i < endeffector.size(); i++)
     {
-      command_interfaces.emplace_back(hardware_interface::CommandInterface(endeffector[i].name, hardware_interface::HW_IF_POSITION, &endeffector[i].cmd));
+      command_interfaces.emplace_back(hardware_interface::CommandInterface(endeffector[i].motor_name, hardware_interface::HW_IF_POSITION, &endeffector[i].desired_motor_angle));
+      command_interfaces.emplace_back(hardware_interface::CommandInterface(endeffector[i].motor_name, hardware_interface::HW_IF_VELOCITY, &endeffector[i].desired_motor_speed));
     }
 
     return command_interfaces;
@@ -102,34 +105,41 @@ namespace endeffector_hardware
     return CallbackReturn::SUCCESS;
   }
 
-  return_type EndeffectorHardware::read(const rclcpp::Time & /*time*/, const rclcpp::Duration &period)
+  return_type EndeffectorHardware::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
   {
 
-    double delta_seconds = period.seconds();
+    std_msgs::msg::Float64MultiArray motor_position_message = std_msgs::msg::Float64MultiArray();
+    std_msgs::msg::Float64MultiArray motor_velocity_message = std_msgs::msg::Float64MultiArray();
+
     for (uint i = 0; i < endeffector.size(); i++)
     {
-      if (endeffector[i].update_position())
+      if (endeffector[i].update_position() && endeffector[i].update_velocity())
       {
-        RCLCPP_DEBUG(rclcpp::get_logger(kEndeffectorHardware), "Joint: %s , Position: %f", endeffector[i].name.c_str(), endeffector[i].pos);
+        // double motor_position = (std::abs(endeffector[i].current_motor_angle)) * (300) / (double)(1023);
+        motor_position_message.data.push_back(endeffector[i].current_motor_pos_);
+        motor_velocity_message.data.push_back(endeffector[i].current_motor_vel_);
+        RCLCPP_DEBUG(rclcpp::get_logger(kEndeffectorHardware), "Joint: %s , Position: %f", endeffector[i].motor_name.c_str(), endeffector[i].current_motor_angle);
       }
-      // endeffector[i].pos = p;
-      // endeffector[i].pos += v * delta_seconds; // Integrate velocity to get position
     }
-
+    motor_pos_publisher->publish(motor_position_message);
+    motor_vel_publisher->publish(motor_velocity_message);
     return return_type::OK;
   }
 
   return_type EndeffectorHardware::write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
   {
     bool is_success = false;
-    for (uint i = 0; i < endeffector.size(); i++)
+    bool second_is_success = false;
+
+    for (auto &motor : endeffector)
     {
-      is_success = endeffector[i].write_position(endeffector[i].cmd);
-      if (!is_success)
-      {
-        // RCLCPP_INFO(rclcpp::get_logger(kEndeffectorHardware), "Command: %f", endeffector[i].cmd);
-        RCLCPP_ERROR(rclcpp::get_logger(kEndeffectorHardware), "Failed to write new position Command: %f", endeffector[i].cmd);
-      }
+      double cmd = motor.desired_motor_angle;
+      is_success = motor.write_position(cmd);
+      second_is_success = motor.write_speed(motor.desired_motor_speed);
+
+      // motorPublisher.
+
+      assert(is_success && second_is_success);
     }
 
     return return_type::OK;
